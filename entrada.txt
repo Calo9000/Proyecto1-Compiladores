@@ -1,0 +1,9 @@
+12 num
+float
+int
+register
+return
+192
+;
+:
+%=
