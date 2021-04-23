@@ -1,9 +1,2 @@
-12 num
-float
-int
-register
-return
-192
-;
-:
-%=
+1.2132
+{1. 3}

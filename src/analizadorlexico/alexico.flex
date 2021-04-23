@@ -18,6 +18,7 @@ class Yytoken {
 
         this.columna = columna;
     }
+    //constructor sobrecargado
 
     public int numToken;
     public String token;
@@ -25,27 +26,23 @@ class Yytoken {
     public int linea;
     public int columna;
     public String toString() {
-        return "Token #"+numToken+": "+token+" C.Lexico: "+tipo+" ["+linea
+        return "Token #"+numToken+": "+token+" Tipo: "+tipo+" ["+linea
         + "," +columna + "]";
     }
 }
 
 
 %% 
-
 %function nextToken
-
 %public
 
 %class AnalizadorLexico
 
 %unicode
 
-%{
-	
+%{	
     private int contador;
     private ArrayList<Yytoken> tokens;
-
 	private void writeOutputFile() throws IOException{
 			String filename = "file.out";
 			BufferedWriter out = new BufferedWriter(
@@ -63,7 +60,6 @@ class Yytoken {
     contador = 0;
 	tokens = new ArrayList<Yytoken>();
 %init}
-
 %eof{
 	try{
 		this.writeOutputFile();
@@ -72,9 +68,7 @@ class Yytoken {
 		ioe.printStackTrace();
 	}
 %eof}
-
 %line
-
 %column
 
 
@@ -83,37 +77,72 @@ EXP_ALPHA=[A-Za-z]
 EXP_DIGITO=[0-9]
 EXP_ALPHANUMERIC={EXP_ALPHA}|{EXP_DIGITO}
 NUMERO=({EXP_DIGITO})+
-EXP_OCTAL = [0-8]
-NUMERO_OCTAL = "0"({EXP_OCTAL})+
+
+EXP_OCTAL = [0-7]
+NUMERO_OCTAL = "0x"({EXP_OCTAL})+
+
 EXP_HEX = [0-9a-fA-F]
 NUMERO_HEX = "0x"({EXP_HEX})+
+
+SIGNO= "" | "-"
+EXP_FLOAT = E{EXP_DIGITO}?{EXP_DIGITO}+
+PARTE_NUMERICA = {EXP_DIGITO}*({EXP_DIGITO}\.|\.{EXP_DIGITO}){EXP_DIGITO}*
+NUMERO_FLOTANTE = {SIGNO}?{PARTE_NUMERICA}{EXP_FLOAT}?
+
 IDENTIFICADOR={EXP_ALPHA}({EXP_ALPHANUMERIC})*
-ESPACIO=" "
+
+IGNORAR= [ ,\t,\r,\n]+
+
 SALTO=\n|\r|\r\n
+
+TERMINAR_LINEA = \r|\n|\r\n
+CARACTER_ENTRADA = [^\r\n]
+
+
+COMENTARIO_BLOQUE =  "/*"( [^*] | (\*+[^*/]) )*\*+\/ 
+COMENTARIO_LINEA = "//" {CARACTER_ENTRADA}* {TERMINAR_LINEA}?
+COMENTARIO = {COMENTARIO_BLOQUE}|{COMENTARIO_LINEA}
+
+
 PALABRA_RESERVADA = "auto"|"break"|"case"|"char"|"const"|"continue"|"default"|"do"|"double"|"else"|"enum"|"extern"|"float"|
 "for"|"goto"|"if"|"int"|"long"|"register"|"return"|"short"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"
-|"unsigned"|"void"|"volatile"|"while"
+|"unsigned"|"void"|"volatile"|"while" | "#include" | "#define"
+
 OPERADORES = "," | ";" |"++" |"--" |"==" |">=" |">" |"?" |"<=" |"<" |"!=" |"||" |"&&" |"!"| 
-"=" |"+" |"-" |"*"| "/" |"%" |"(" |")"| "[" |"]" |"{"| "}" |":" |"." |"+=" |"-=" |"*=" |"/="| "&" |"^" |"|" 
+"=" |"+" |"-" |"*"| "/" |"%" |"(" |")"| "[" |"]" |"{"| "}" |":" |"." |"+=" |"-=" |"*=" |"/="| "&" |"^" |"\|" |
 ">>" |"<<" |"~" |"%="| "&=" |"^=" |"|=" |"<<=" |">>=" |"->"
+
+LITERAL = "\""([^\\\"]|\\.)*"\"" 
+ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 %% 
 
 
+
+{COMENTARIO}   {
+ //Ignorar
+}
 {NUMERO}    {
     contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"num",yyline,yycolumn);
-    tokens.add(t);
-    return t;
-}
-{NUMERO_HEX}    {
-    contador++;
-    Yytoken t = new Yytoken(contador, yytext(), "num_hex",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador,yytext(),"INT",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
 {NUMERO_OCTAL}    {
     contador++;
-    Yytoken t = new Yytoken(contador, yytext(), "num_oct",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador, yytext(), "NUM_OCT",yyline,yycolumn);
+    tokens.add(t);
+    return t;
+}
+{NUMERO_HEX}    {
+    contador++;
+    Yytoken t = new Yytoken(contador, yytext(), "NUM_HEX",yyline,yycolumn);
+    tokens.add(t);
+    return t;
+}
+
+{NUMERO_FLOTANTE}    {
+    contador++;
+    Yytoken t = new Yytoken(contador, yytext(), "NUM_FLOAT",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
@@ -129,55 +158,42 @@ OPERADORES = "," | ";" |"++" |"--" |"==" |">=" |">" |"?" |"<=" |"<" |"!=" |"||" 
     tokens.add(t);
     return t;
 }*/
+{LITERAL}   {
+    contador++;
+    Yytoken t = new Yytoken(contador,yytext(),"LITERAL",yyline,yycolumn);
+    tokens.add(t);
+    return t;
+}
 {PALABRA_RESERVADA}   {
     contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"palabra_reservada",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador,yytext(),"PALABRA_RESERVADA",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
 {IDENTIFICADOR}   {
     contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"id",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador,yytext(),"IDENTIFICADOR",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
+
 {OPERADORES}   {
     contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"operador",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador,yytext(),"OPERADOR",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
-/*"+="  {
-    contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"asigna_suma",yyline,yycolumn);
-    tokens.add(t);
-    return t;
-}
-"+"  {
-    contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"suma",yyline,yycolumn);
-    tokens.add(t);
-    return t;
-}
-"="  {
-    contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"asigna",yyline,yycolumn);
-    tokens.add(t);
-    return t;
-}
-"-"  {
-    contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"resta",yyline,yycolumn);
-    tokens.add(t);
-    return t;
-}*/
 
-{ESPACIO} {
+{IGNORAR} {
  	//ignorar
 }
+
 {SALTO} {
+    //ignorar
+}
+{ERROR} {
     contador++;
-    Yytoken t = new Yytoken(contador,"","fin_linea",yyline,yycolumn);
+    Yytoken t = new Yytoken(contador,yytext(),"ERROR",yyline,yycolumn);
     tokens.add(t);
     return t;
 }
