@@ -4,6 +4,10 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
 
 class Yytoken {
     Yytoken (int numToken,String token, String tipo, int linea, int columna){
@@ -32,6 +36,7 @@ class Yytoken {
 }
 
 
+
 %% 
 %function nextToken
 %public
@@ -41,6 +46,7 @@ class Yytoken {
 %unicode
 
 %{	
+    Hashtable<List<String>, List<Integer>> lexemas = new Hashtable<List<String>,  List<Integer>>();
     private int contador;
     private ArrayList<Yytoken> tokens;
 	private void writeOutputFile() throws IOException{
@@ -49,9 +55,27 @@ class Yytoken {
 				new FileWriter(filename));
             System.out.println("\n*** Tokens guardados en archivo ***\n");
 			for(Yytoken t: this.tokens){
-				System.out.println(t);
-				out.write(t + "\n");
+				//System.out.println(t);
+                                lexemas.putIfAbsent(List.of(t.token, t.tipo), new ArrayList<Integer>());
+                                lexemas.get(List.of(t.token, t.tipo)).add(t.linea);
+				//out.write(t + "\n");
 			}
+                        lexemas.forEach((k, v) -> {
+                            System.out.print(k.get(0)+"\t| "+k.get(1)+"\t");
+                            System.out.print(" | ");
+                            int i = 0;
+                            while (i < v.size()){
+                                int numero = v.get(i);
+                                int repeticiones = Collections.frequency(v, numero);
+                                System.out.print(numero);
+                                if (repeticiones > 1){
+                                    System.out.print("("+repeticiones+")");
+                                }
+                                i += repeticiones;
+                                if (i<v.size()) System.out.print(", ");
+                            }
+                            System.out.print("\n");
+                        });
 			out.close();
 	}
 %}

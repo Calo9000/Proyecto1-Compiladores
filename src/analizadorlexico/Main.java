@@ -29,7 +29,7 @@ public class Main {
             Yytoken token = null;
             do {
                 token =  a.nextToken();
-                System.out.println(token);
+                //System.out.println(token);
             } while (token != null);
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);

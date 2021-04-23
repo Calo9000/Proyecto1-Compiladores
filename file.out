@@ -1,5 +1,0 @@
-Token #1: 1.2132 Tipo: NUM_FLOAT [0,0]
-Token #2: { Tipo: OPERADOR [1,0]
-Token #3: 1. Tipo: NUM_FLOAT [1,1]
-Token #4: 3 Tipo: INT [1,4]
-Token #5: } Tipo: OPERADOR [1,5]
