@@ -58,8 +58,9 @@ class Yytoken {
 				//System.out.println(t);
                                 lexemas.putIfAbsent(List.of(t.token, t.tipo), new ArrayList<Integer>());
                                 lexemas.get(List.of(t.token, t.tipo)).add(t.linea);
-				//out.write(t + "\n");
+				out.write(t + "\n");
 			}
+                        // Los errores estan en this.tokens pero son de tipo ERROR
                         ArrayList<Integer> errores = new ArrayList<Integer>();
                         lexemas.forEach((k, v) -> {
                             
@@ -82,6 +83,7 @@ class Yytoken {
                                 errores.addAll(v);
                             }
                         });
+                        // Printea los errores
                         if (errores.size()>0) System.out.println("\nERRORES:");
                         errores.forEach((e) -> {
                             System.out.println("Error en línea "+e);
@@ -125,7 +127,7 @@ NUMERO_FLOTANTE = {SIGNO}?{PARTE_NUMERICA}{EXP_FLOAT}?
 
 IDENTIFICADOR={EXP_ALPHA}({EXP_ALPHANUMERIC})*
 
-IGNORAR= [ ,\t,\r,\n]+
+IGNORAR= [\t,\r,\n]+ | " "
 
 SALTO=\n|\r|\r\n
 
@@ -146,7 +148,7 @@ OPERADORES = "," | ";" |"++" |"--" |"==" |">=" |">" |"?" |"<=" |"<" |"!=" |"||" 
 "=" |"+" |"-" |"*"| "/" |"%" |"(" |")"| "[" |"]" |"{"| "}" |":" |"." |"+=" |"-=" |"*=" |"/="| "&" |"^" |"\|" |
 ">>" |"<<" |"~" |"%="| "&=" |"^=" |"|=" |"<<=" |">>=" |"->"
 
-LITERAL = "\""([^\\\"]|\\.)*"\"" 
+LITERAL = "\""([^\\\"]|\\.)*"\""|"\'"([^\\\"]|\\.)"\'"
 ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 %% 
 

@@ -58,7 +58,7 @@ class Yytoken {
 				//System.out.println(t);
                                 lexemas.putIfAbsent(List.of(t.token, t.tipo), new ArrayList<Integer>());
                                 lexemas.get(List.of(t.token, t.tipo)).add(t.linea);
-				//out.write(t + "\n");
+				out.write(t + "\n");
 			}
                         // Los errores estan en this.tokens pero son de tipo ERROR
                         ArrayList<Integer> errores = new ArrayList<Integer>();
@@ -148,7 +148,7 @@ OPERADORES = "," | ";" |"++" |"--" |"==" |">=" |">" |"?" |"<=" |"<" |"!=" |"||" 
 "=" |"+" |"-" |"*"| "/" |"%" |"(" |")"| "[" |"]" |"{"| "}" |":" |"." |"+=" |"-=" |"*=" |"/="| "&" |"^" |"\|" |
 ">>" |"<<" |"~" |"%="| "&=" |"^=" |"|=" |"<<=" |">>=" |"->"
 
-LITERAL = "\""([^\\\"]|\\.)*"\"" 
+LITERAL = "\""([^\\\"]|\\.)*"\""|"\'"([^\\\"]|\\.)"\'"
 ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 %% 
 
