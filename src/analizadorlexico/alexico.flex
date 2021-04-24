@@ -108,7 +108,6 @@ class Yytoken {
 %column
 
 
-
 EXP_ALPHA=[A-Za-z]
 EXP_DIGITO=[0-9]
 EXP_ALPHANUMERIC={EXP_ALPHA}|{EXP_DIGITO}
