@@ -462,21 +462,31 @@ public class AnalizadorLexico {
                                 lexemas.get(List.of(t.token, t.tipo)).add(t.linea);
 				//out.write(t + "\n");
 			}
+                        ArrayList<Integer> errores = new ArrayList<Integer>();
                         lexemas.forEach((k, v) -> {
-                            System.out.print(k.get(0)+"|\t"+k.get(1)+"\t");
-                            System.out.print(" | ");
-                            int i = 0;
-                            while (i < v.size()){
-                                int numero = v.get(i);
-                                int repeticiones = Collections.frequency(v, numero);
-                                System.out.print(numero);
-                                if (repeticiones > 1){
-                                    System.out.print("("+repeticiones+")");
+                            
+                            if(k.get(1)!="ERROR"){
+                                System.out.print(k.get(0)+"\t| "+k.get(1)+"\t");
+                                System.out.print(" | ");
+                                int i = 0;
+                                while (i < v.size()){
+                                    int numero = v.get(i);
+                                    int repeticiones = Collections.frequency(v, numero);
+                                    System.out.print(numero);
+                                    if (repeticiones > 1){
+                                        System.out.print("("+repeticiones+")");
+                                    }
+                                    i += repeticiones;
+                                    if (i<v.size()) System.out.print(", ");
                                 }
-                                i += repeticiones;
-                                if (i<v.size()) System.out.print(", ");
+                                System.out.print("\n");
+                            } else {
+                                errores.addAll(v);
                             }
-                            System.out.print("\n");
+                        });
+                        if (errores.size()>0) System.out.println("\nERRORES:");
+                        errores.forEach((e) -> {
+                            System.out.println("Error en línea "+e);
                         });
 			out.close();
 	}

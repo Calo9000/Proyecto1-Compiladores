@@ -60,21 +60,33 @@ class Yytoken {
                                 lexemas.get(List.of(t.token, t.tipo)).add(t.linea);
 				//out.write(t + "\n");
 			}
+                        // Los errores estan en this.tokens pero son de tipo ERROR
+                        ArrayList<Integer> errores = new ArrayList<Integer>();
                         lexemas.forEach((k, v) -> {
-                            System.out.print(k.get(0)+"\t| "+k.get(1)+"\t");
-                            System.out.print(" | ");
-                            int i = 0;
-                            while (i < v.size()){
-                                int numero = v.get(i);
-                                int repeticiones = Collections.frequency(v, numero);
-                                System.out.print(numero);
-                                if (repeticiones > 1){
-                                    System.out.print("("+repeticiones+")");
+                            
+                            if(k.get(1)!="ERROR"){
+                                System.out.print(k.get(0)+" "+k.get(1)+" ");
+                                System.out.print(" ");
+                                int i = 0;
+                                while (i < v.size()){
+                                    int numero = v.get(i);
+                                    int repeticiones = Collections.frequency(v, numero);
+                                    System.out.print(numero);
+                                    if (repeticiones > 1){
+                                        System.out.print("("+repeticiones+")");
+                                    }
+                                    i += repeticiones;
+                                    if (i<v.size()) System.out.print(", ");
                                 }
-                                i += repeticiones;
-                                if (i<v.size()) System.out.print(", ");
+                                System.out.print("\n");
+                            } else {
+                                errores.addAll(v);
                             }
-                            System.out.print("\n");
+                        });
+                        // Printea los errores
+                        if (errores.size()>0) System.out.println("\nERRORES:");
+                        errores.forEach((e) -> {
+                            System.out.println("Error en línea "+e);
                         });
 			out.close();
 	}
@@ -115,7 +127,7 @@ NUMERO_FLOTANTE = {SIGNO}?{PARTE_NUMERICA}{EXP_FLOAT}?
 
 IDENTIFICADOR={EXP_ALPHA}({EXP_ALPHANUMERIC})*
 
-IGNORAR= [ ,\t,\r,\n]+
+IGNORAR= [\t,\r,\n]+ | " "
 
 SALTO=\n|\r|\r\n
 
