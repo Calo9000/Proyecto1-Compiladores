@@ -3,9 +3,11 @@ Token #2: '\n' Tipo: LITERAL [1,0]
 Token #3: '\t' Tipo: LITERAL [2,0]
 Token #4: ' ' Tipo: LITERAL [3,0]
 Token #5: '\r' Tipo: LITERAL [4,0]
-Token #6: ' Tipo: ERROR [5,0]
 Token #7: aa Tipo: IDENTIFICADOR [5,1]
-Token #8: ' Tipo: ERROR [5,3]
 Token #9: "a" Tipo: LITERAL [6,0]
-Token #10: á Tipo: ERROR [7,0]
 Token #11: char Tipo: PALABRA_RESERVADA [8,0]
+
+ ERRORES 
+Error en la linea número 5 causado por '
+Error en la linea número 5 causado por '
+Error en la linea número 7 causado por á

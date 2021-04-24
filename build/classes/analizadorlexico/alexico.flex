@@ -22,16 +22,25 @@ class Yytoken {
 
         this.columna = columna;
     }
-    //constructor sobrecargado
+    Yytoken (String token, int linea){
+
+        this.token = new String(token);
+
+        this.linea = linea;
+    }
 
     public int numToken;
     public String token;
     public String tipo;
     public int linea;
     public int columna;
+
     public String toString() {
         return "Token #"+numToken+": "+token+" Tipo: "+tipo+" ["+linea
         + "," +columna + "]";
+    }
+    public String errorToStr() {
+        return "Error en la linea número " + linea + " causado por " + token ;
     }
 }
 
@@ -49,6 +58,7 @@ class Yytoken {
     Hashtable<List<String>, List<Integer>> lexemas = new Hashtable<List<String>,  List<Integer>>();
     private int contador;
     private ArrayList<Yytoken> tokens;
+    private ArrayList<Yytoken> errores;
 	private void writeOutputFile() throws IOException{
 			String filename = "file.out";
 			BufferedWriter out = new BufferedWriter(
@@ -61,33 +71,36 @@ class Yytoken {
 				out.write(t + "\n");
 			}
                         // Los errores estan en this.tokens pero son de tipo ERROR
-                        ArrayList<Integer> errores = new ArrayList<Integer>();
-                        lexemas.forEach((k, v) -> {
-                            
-                            if(k.get(1)!="ERROR"){
-                                System.out.print(k.get(0)+" "+k.get(1)+" ");
-                                System.out.print(" ");
-                                int i = 0;
-                                while (i < v.size()){
-                                    int numero = v.get(i);
-                                    int repeticiones = Collections.frequency(v, numero);
-                                    System.out.print(numero);
-                                    if (repeticiones > 1){
-                                        System.out.print("("+repeticiones+")");
-                                    }
-                                    i += repeticiones;
-                                    if (i<v.size()) System.out.print(", ");
-                                }
-                                System.out.print("\n");
-                            } else {
-                                errores.addAll(v);
-                            }
-                        });
-                        // Printea los errores
-                        if (errores.size()>0) System.out.println("\nERRORES:");
-                        errores.forEach((e) -> {
-                            System.out.println("Error en línea "+e);
-                        });
+                        //ArrayList<Integer> errores = new ArrayList<Integer>();
+                lexemas.forEach((k, v) -> {
+                    System.out.print(k.get(0)+" "+k.get(1)+" ");
+                    System.out.print(" ");
+                    int i = 0;
+                    while (i < v.size()){
+                        int numero = v.get(i);
+                        int repeticiones = Collections.frequency(v, numero);
+                        System.out.print(numero);
+                        if (repeticiones > 1){
+                            System.out.print("("+repeticiones+")");
+                        }
+                        i += repeticiones;
+                        if (i<v.size()) System.out.print(", ");
+                    }
+                    System.out.print("\n");
+                });
+                // Printea los errores
+                
+                
+                if (errores.size()>0) System.out.println("\nERRORES:");
+                out.write("\n ERRORES \n");
+                for(Yytoken e: this.errores){
+                    System.out.println(e.errorToStr());
+                    out.write(e.errorToStr() + "\n");
+                }
+                    //errores.forEach((e) -> {
+                    //    System.out.println(e.errorToStr());
+                    //    out.write(e + "\n");
+                    //});
 			out.close();
 	}
 %}
@@ -95,6 +108,7 @@ class Yytoken {
 %init{
     contador = 0;
 	tokens = new ArrayList<Yytoken>();
+    errores = new ArrayList<Yytoken>();
 %init}
 %eof{
 	try{
@@ -229,8 +243,8 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 }
 {ERROR} {
     contador++;
-    Yytoken t = new Yytoken(contador,yytext(),"ERROR",yyline,yycolumn);
-    tokens.add(t);
+    Yytoken t = new Yytoken(yytext(),yyline);
+    errores.add(t);
     return t;
 }
 
