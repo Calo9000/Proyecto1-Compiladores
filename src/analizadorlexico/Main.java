@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Scanner;
 /**
  *
  * @author franc
@@ -19,9 +20,9 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-       
-        String entrada = "";
-        entrada = "entrada.txt";
+        System.out.println("Ingrese el nombre del archivo de texto: \n");
+        Scanner in = new Scanner(System.in);
+        String entrada = in.nextLine();
         BufferedReader bf = null;
         try {
             bf = new BufferedReader(new FileReader(entrada));
