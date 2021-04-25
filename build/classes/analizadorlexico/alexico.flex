@@ -92,7 +92,7 @@ class Yytoken {
                 
                 
                 if (errores.size()>0) System.out.println("\nERRORES:");
-                out.write("\n ERRORES \n");
+                out.write("\nERRORES \n");
                 for(Yytoken e: this.errores){
                     System.out.println(e.errorToStr());
                     out.write(e.errorToStr() + "\n");
