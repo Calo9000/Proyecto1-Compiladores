@@ -124,19 +124,19 @@ class Yytoken {
 
 EXP_ALPHA=[A-Za-z]
 EXP_DIGITO=[0-9]
+DIGITO_MAYOR_CERO = [1-9]
 EXP_ALPHANUMERIC={EXP_ALPHA}|{EXP_DIGITO}
-NUMERO=({EXP_DIGITO})+
+NUMERO=({DIGITO_MAYOR_CERO}{EXP_DIGITO}*[E]?{EXP_DIGITO}*)
 
 EXP_OCTAL = [0-7]
-NUMERO_OCTAL = "0x"({EXP_OCTAL})+
+NUMERO_OCTAL = "0"({EXP_OCTAL})+
 
 EXP_HEX = [0-9a-fA-F]
-NUMERO_HEX = "0x"({EXP_HEX})+
+NUMERO_HEX = "0x"({EXP_HEX})+ | "0X"({EXP_HEX})+
 
 SIGNO= "" | "-"
-EXP_FLOAT = E{EXP_DIGITO}?{EXP_DIGITO}+
-PARTE_NUMERICA = {EXP_DIGITO}*({EXP_DIGITO}\.|\.{EXP_DIGITO}){EXP_DIGITO}*
-NUMERO_FLOTANTE = {SIGNO}?{PARTE_NUMERICA}{EXP_FLOAT}?
+
+NUMERO_FLOTANTE = {SIGNO}?{EXP_ALPHANUMERIC}+\.{EXP_ALPHANUMERIC}+
 
 IDENTIFICADOR={EXP_ALPHA}({EXP_ALPHANUMERIC})*
 
@@ -149,7 +149,7 @@ CARACTER_ENTRADA = [^\r\n]
 
 
 COMENTARIO_BLOQUE =  "/*"( [^*] | (\*+[^*/]) )*\*+\/ 
-COMENTARIO_LINEA = "//" {CARACTER_ENTRADA}* {TERMINAR_LINEA}?
+COMENTARIO_LINEA = "//" {CARACTER_ENTRADA}* {TERMINAR_LINEA}
 COMENTARIO = {COMENTARIO_BLOQUE}|{COMENTARIO_LINEA}
 
 
@@ -161,8 +161,8 @@ OPERADORES = "," | ";" |"++" |"--" |"==" |">=" |">" |"?" |"<=" |"<" |"!=" |"||" 
 "=" |"+" |"-" |"*"| "/" |"%" |"(" |")"| "[" |"]" |"{"| "}" |":" |"." |"+=" |"-=" |"*=" |"/="| "&" |"^" |"\|" |
 ">>" |"<<" |"~" |"%="| "&=" |"^=" |"|=" |"<<=" |">>=" |"->"
 
-LITERAL = "\""([^\\\"]|\\.)*"\""|"\'"([^\\\"]|\\.)"\'"
-ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
+LITERAL = [\"]([^\"\\\n]|\\.|\\\n)*[\"]|"\'"([^\\\"]|\\.)"\'"
+ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | . 
 %% 
 
 

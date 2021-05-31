@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Scanner;
+import java_cup.runtime.Symbol;
 /**
  *
  * @author franc
@@ -28,6 +29,7 @@ public class Main {
             bf = new BufferedReader(new FileReader(entrada));
             AnalizadorLexico a = new AnalizadorLexico(bf);
             Yytoken token = null;
+            Symbol simbolo = null;
             do {
                 token =  a.nextToken();
                 //System.out.println(token);

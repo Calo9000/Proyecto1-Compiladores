@@ -1,0 +1,53 @@
+package analizadorlexico;
+
+import java_cup.runtime.Symbol;
+
+parser code
+{:
+    private Symbol s;
+    
+    public void syntax_error(Symbol s){
+        this.s = s;
+    }
+
+    public Symbol getS(){
+        return this.s;
+}
+:};
+
+terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
+    CHAR, FLOAT, DOUBLE, SHORT, IF, ELSE, DO, WHILE, FOR, BREAK, CASE, CONST, CONTINUE, 
+    DEFAULT, RETURN, SWITCH, VOID, IDENTIFICADOR, IGUAL, SUMA, RESTA, MULTIPLICACION, DIVISION, 
+    OP_LOGICO, OP_RELACIONAL, OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, PARIZQ, PARDER, 
+    LLAVEIZQ, LLAVEDER, 
+    CORCHETEIZQ, CORCHETEDER, PCOMA
+;
+
+non terminal inicio, sentencia, declaracion, declaracion_for, if, if_else,
+    while, do_while, for, sentencia_booleana, sentencia_for, variables, funciones, 
+    declaraciones, programa, t_dato, cadena
+;
+
+start with programa;
+
+programa ::= declaraciones funciones | funciones
+;
+
+declaraciones ::= /*vacio*/ | declaracion declaraciones
+;
+
+t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
+;
+
+cadena ::= CHAR CORCHETEIZQ NUMERO CORCHETEDER | CHAR CORCHETEIZQ CORCHETEDER
+;
+
+declaracion ::= 
+    t_dato IDENTIFICADOR PCOMA | // int a;
+    t_dato IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA | // int a = 1.1;
+    t_dato IDENTIFICADOR IGUAL NUMERO PCOMA |
+    t_dato IDENTIFICADOR OP_INCDEC PCOMA | 
+    t_dato OP_INCDEC IDENTIFICADOR PCOMA | 
+    cadena IDENTIFICADOR IGUAL LITERAL PCOMA |
+    cadena IDENTIFICADOR OP_ATRIBUCION LITERAL PCOMA
+;
