@@ -9,6 +9,6 @@ int *z=32;
 int main()
 {
 
-return 0;
+return 00;
 
 }

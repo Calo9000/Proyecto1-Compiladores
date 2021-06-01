@@ -30,44 +30,14 @@ import java.util.Collections;
     private Symbol symbol(int type){
         return new Symbol(type, yyline, yycolumn);
     }
-    //Hashtable<List<String>, List<Integer>> lexemas = new Hashtable<List<String>,  List<Integer>>();
-    //private int contador;
-    //private ArrayList<Yytoken> tokens;
-    //private ArrayList<Yytoken> errores;
-    private ArrayList<Symbol> simbolos;
-    private void writeOutputFile() throws IOException{
-                    String filename = "file.out";
-                    BufferedWriter out = new BufferedWriter(
-                            new FileWriter(filename));
-        System.out.println("\n*** Tokens guardados en archivo ***\n");
-        /*    if (errores.size()>0) System.out.println("\nERRORES:");
-            out.write("\nERRORES \n");
-            for(Symbol e: this.errores){
-                System.out.println(e.errorToStr());
-                out.write(e.errorToStr() + "\n");
-            }
-                //errores.forEach((e) -> {
-                //    System.out.println(e.errorToStr());
-                //    out.write(e + "\n");
-                //});
-
-        */
-                    out.close();
-    }
 %}
 
 %init{
-    simbolos = new ArrayList<Symbol>();
+    //simbolos = new ArrayList<Symbol>();
     //errores = new ArrayList<Symbol>();
+    System.out.println("analizando archivo");
 %init}
-%eof{
-	try{
-		this.writeOutputFile();
-        System.exit(0);
-	}catch(IOException ioe){
-		ioe.printStackTrace();
-	}
-%eof}
+
 %line
 %column
 
@@ -76,7 +46,7 @@ EXP_ALPHA=[A-Za-z]
 EXP_DIGITO=[0-9]
 DIGITO_MAYOR_CERO = [1-9]
 EXP_ALPHANUMERIC={EXP_ALPHA}|{EXP_DIGITO}
-NUMERO=({DIGITO_MAYOR_CERO}{EXP_DIGITO}*[E]?{EXP_DIGITO}*)
+NUMERO=({DIGITO_MAYOR_CERO}{EXP_DIGITO}*[E]?{EXP_DIGITO}* | 0)
 
 EXP_OCTAL = [0-7]
 NUMERO_OCTAL = "0"({EXP_OCTAL})+
@@ -202,7 +172,7 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 // OPERADORES ARITMETICOS
 
 /* Operadores Atribucion */
-( "+=" | "-="  | "*=" | "/=" | "%=" | "=" ) {return new Symbol(sym.OP_ATRIBUCION, yychar, yyline, yytext());}
+( "+=" | "-="  | "*=" | "/=" | "%=" ) {return new Symbol(sym.OP_ATRIBUCION, yychar, yyline, yytext());}
 /* Operadores Incremento y decremento */
 ( "++" | "--" ) {return new Symbol(sym.OP_INCDEC, yychar, yyline, yytext());}
 
@@ -220,6 +190,8 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 
 ( ";" ) {return new Symbol(sym.PCOMA, yychar, yyline, yytext());}
 
+( "," ) {return new Symbol(sym.COMA, yychar, yyline, yytext());}
+
 
 
 {IGNORAR} {
@@ -229,5 +201,8 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 {SALTO} {
     //ignorar
 }
-{ERROR} {return new Symbol(sym.ERROR, yychar, yyline, yytext());}
+{ERROR} {
+            System.out.println("Error causado por " + yytext() + " en la línea " + yyline);
+            return new Symbol(sym.ERROR, yychar, yyline, yytext());
+         }
 

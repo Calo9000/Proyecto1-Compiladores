@@ -1,6 +1,7 @@
 package analizadorlexico;
 
 import java_cup.runtime.Symbol;
+import java.io.FileReader;
 
 parser code
 {:
@@ -13,82 +14,129 @@ parser code
     public Symbol getS(){
         return this.s;
 }
+
+    
+    public void report_error(String message, Object info) {
+        StringBuilder m = new StringBuilder("Error");
+        if (info instanceof java_cup.runtime.Symbol) {
+            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+            if (s.left >= 0) {                
+                m.append(" in line "+(s.left+1));
+                if (s.right >= 0)
+                    m.append(", column "+(s.right+1));
+            }
+        }
+        m.append(" : "+message);
+        System.err.println(m);
+    }
+
+    public void report_fatal_error(String message, Object info) {
+        System.out.println("Error encontrado");
+        report_error(message, info);
+        System.exit(1);
+    }
+    
+    public static void main(String[] args){
+        try {
+            System.out.println("Abriendo archivo " + args[0]);
+            parser asin = new parser(
+                    new AnalizadorLexicoCup( new FileReader(args[0])));
+            asin.parse();
+            System.out.println("\n----------------");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 :};
 
 terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
     CHAR, FLOAT, DOUBLE, SHORT, IF, ELSE, DO, WHILE, FOR, BREAK, CASE, CONST, CONTINUE, 
-    DEFAULT, RETURN, SWITCH, VOID, IDENTIFICADOR, OP_LOGICO, OP_RELACIONAL,
-    OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, PARIZQ, PARDER, LLAVEIZQ, LLAVEDER, 
-    CORCHETEIZQ, CORCHETEDER, PCOMA;
-
-non terminal INICIO, SENTENCIA, DECLARACION, DECLARACION_FOR, IF, IF_ELSE,
-    WHILE, DO_WHILE, FOR, SENTENCIA_BOOLEANA, SENTENCIA_FOR, VARIABLES, FUNCIONES, DECLARACIONES, PROGRAMA;
-
-start with PROGRAMA;
-
-PROGRAMA ::= DECLARACIONES FUNCIONES | FUNCIONES
+    DEFAULT, RETURN, SWITCH, VOID, IDENTIFICADOR, IGUAL, SUMA, RESTA, MULTIPLICACION, DIVISION, 
+    OP_LOGICO, OP_RELACIONAL, OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, PARIZQ, PARDER, 
+    LLAVEIZQ, LLAVEDER, 
+    CORCHETEIZQ, CORCHETEDER, PCOMA, COMA,
+    ERROR
 ;
 
-DECLARACIONES ::= /*vacio*/ | DECLARACION DECLARACIONES
+non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, if, if_else,
+    while, do_while, for, sentencia_booleana, sentencia_for, variables, funciones, 
+    declaraciones, programa, t_dato, cadena, parametros, parametros_opc, 
+    parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion, valor_numerico,
+    array, variable, elementos, elemento, valor
 ;
 
-SENTENCIA ::= 
-    SENTENCIA DECLARACION |
-    DECLARACION |
-    SENTENCIA IF | 
-    IF |
-    SENTENCIA IF_ELSE |
-    IF_ELSE |
-    SENTENCIA WHILE |
-    WHILE |
-    SENTENCIA DO_WHILE
-    DO_WHILE |
-    SENTENCIA FOR |
-    FOR
+precedence right INT;
+precedence right CHAR;
+precedence right ELSE; 
+precedence right LONG;
+precedence right FLOAT;
+precedence right DOUBLE;
+precedence right SHORT;
+
+start with programa;
+
+programa ::= error declaraciones | error declaraciones funciones | error funciones 
 ;
 
-T_DATO ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
+declaraciones ::= declaracion declaraciones | declaracion
 ;
 
-Cadena ::= CHAR CORCHETEIZQ NUMERO CORCHETEDER | CHAR CORCHETEIZQ CORCHETEDER
+t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
 ;
 
-DECLARACION ::= 
-    T_DATO IDENTIFICADOR PCOMA | // int a;
-    T_DATO IDENTIFICADOR OP_ATRIBUCION Numero PCOMA | // int a = 1.1;
-    T_DATO IDENTIFICADOR Igual Numero PCOMA |
-    T_DATO IDENTIFICADOR OP_INCREMENTO PCOMA | 
-    T_DATO OP_INCREMENTO IDENTIFICADOR PCOMA | 
-    Cadena IDENTIFICADOR Op_atribucion Comillas Comillas PCOMA |
-    Cadena IDENTIFICADOR Igual Comillas Comillas PCOMA |
-    Cadena IDENTIFICADOR Op_atribucion Comillas Identificador Comillas PCOMA |
-    Cadena IDENTIFICADOR Igual Comillas Identificador Comillas PCOMA
-;
-IF ::= If Parentesis_i SENTENCIA_BOOLEANA Parentesis_d Llave_i SENTENCIA Llave_d
-;
-SENTENCIA_BOOLEANA ::= 
-    Op_booleano | 
-    Identificador Op_relacional Op_booleano |
-    Identificador Op_relacional Numero |
-    Identificador Op_relacional Identificador |
-    Identificador Op_relacional Comillas Comillas |
-    Identificador Op_relacional Comillas Identificador Comillas
-;
-IF_ELSE ::= If Parentesis_i SENTENCIA_BOOLEANA Parentesis_d Llave_i SENTENCIA Llave_d Else Llave_i SENTENCIA Llave_d
-;
-WHILE ::= While Parentesis_i SENTENCIA_BOOLEANA Parentesis_d Llave_i SENTENCIA Llave_d
-;
-DO_WHILE ::= Do Llave_i SENTENCIA Llave_d While Parentesis_i SENTENCIA_BOOLEANA Parentesis_d P_coma
-;
-FOR ::= For Parentesis_i SENTENCIA_FOR Parentesis_d Llave_i SENTENCIA Llave_d
-;
-SENTENCIA_FOR ::=
-    T_dato Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR |
-    Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR
-;
-DECLARACION_FOR ::= 
-    Identificador Op_atribucion Numero |
-    Identificador Op_incremento | 
-    Op_incremento Identificador
+valor_numerico ::= NUMERO | NUMERO_FLOAT | NUMERO_OCT | NUMERO_HEX
 ;
 
+valor ::= valor_numerico | LITERAL | array
+;
+
+array ::= CORCHETEIZQ elementos CORCHETEDER | CORCHETEIZQ CORCHETEDER
+;
+
+elementos ::= valor COMA elementos | valor
+;
+
+
+variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
+;
+
+declaracion ::= 
+    t_dato asignacion PCOMA | 
+    t_dato PCOMA
+;
+
+asignacion ::=
+    variable IGUAL valor
+;
+
+funciones ::= funcion funciones | funcion
+;
+
+parametros ::= parametro COMA parametros | parametro
+;
+
+parametros_opc ::= /*vacio*/ | parametros
+;
+
+parametro ::= t_dato IDENTIFICADOR
+;
+
+funcion ::=
+    t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER 
+    {:System.out.println("funcionzasa");:}
+    | 
+    VOID IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER
+;
+
+dentro_funcion ::= declaraciones | declaraciones sentencias | sentencias
+;
+
+sentencias ::= 
+    sentencia sentencias | sentencia
+;
+
+sentencia ::=
+    variable IGUAL valor PCOMA |
+    IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA // a+=1;
+;

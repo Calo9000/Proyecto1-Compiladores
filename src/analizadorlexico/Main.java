@@ -21,6 +21,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        /*
         System.out.println("Ingrese el nombre del archivo de texto: \n");
         Scanner in = new Scanner(System.in);
         String entrada = in.nextLine();
@@ -32,7 +33,7 @@ public class Main {
             Symbol simbolo = null;
             do {
                 token =  a.nextToken();
-                //System.out.println(token);
+                
             } while (token != null);
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -44,7 +45,12 @@ public class Main {
             }
         }
         System.out.println("\n Ejecucion finalizada... \n");
-
+        */
+        
+        String[] archivoPrueba = {"test.c"};
+        parser.main(archivoPrueba);
+        System.out.println("Ejecutado!");
+        
     }
     
 }
