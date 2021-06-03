@@ -54,16 +54,19 @@ terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
     CHAR, FLOAT, DOUBLE, SHORT, IF, ELSE, DO, WHILE, FOR, BREAK, CASE, CONST, CONTINUE, 
     DEFAULT, RETURN, SWITCH, VOID, IDENTIFICADOR, IGUAL, SUMA, RESTA, MULTIPLICACION, DIVISION, 
     OP_LOGICO, OP_RELACIONAL, OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, PARIZQ, PARDER, 
-    LLAVEIZQ, LLAVEDER, 
-    CORCHETEIZQ, CORCHETEDER, PCOMA, COMA,
+    LLAVEIZQ, LLAVEDER, READ, WRITE, DOSPUNTOS,
+    CORCHETEIZQ, CORCHETEDER, PCOMA, COMA, 
     ERROR
 ;
 
 non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, if, if_else,
-    while, do_while, for, sentencia_booleana, sentencia_for, variables, funciones, 
+    while, do_while, for, sentencia_booleana, variables, funciones, 
     declaraciones, programa, t_dato, cadena, parametros, parametros_opc, 
     parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion, valor_numerico,
-    array, variable, elementos, elemento, valor
+    array, variable, elementos, elemento, valor, operacion, operaciones, operador,
+    valor_especifico, error_declaracion, cosa, cosas, inicial, return, sentencia_if,
+    sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
+    sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for
 ;
 
 precedence right INT;
@@ -73,13 +76,29 @@ precedence right LONG;
 precedence right FLOAT;
 precedence right DOUBLE;
 precedence right SHORT;
+precedence left SUMA;
+precedence left RESTA;
+precedence left MULTIPLICACION;
+precedence left DIVISION;
+precedence left OP_LOGICO;
+precedence left OP_RELACIONAL;
+precedence right OP_INCDEC;
+precedence right IDENTIFICADOR;
+precedence right WHILE;
 
-start with programa;
+start with inicial;
 
-programa ::= error declaraciones | error declaraciones funciones | error funciones 
+inicial ::= programa
 ;
 
-declaraciones ::= declaracion declaraciones | declaracion
+programa ::= programa cosa | /*vacio*/
+;
+
+
+cosa ::= declaracion | funcion
+;
+
+declaraciones ::=  declaracion | declaracion declaraciones
 ;
 
 t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
@@ -88,10 +107,16 @@ t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
 valor_numerico ::= NUMERO | NUMERO_FLOAT | NUMERO_OCT | NUMERO_HEX
 ;
 
-valor ::= valor_numerico | LITERAL | array
+operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL
 ;
 
-array ::= CORCHETEIZQ elementos CORCHETEDER | CORCHETEIZQ CORCHETEDER
+operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC
+;
+
+valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | variable
+;
+
+array ::= LLAVEIZQ elementos LLAVEDER | LLAVEIZQ LLAVEDER
 ;
 
 elementos ::= valor COMA elementos | valor
@@ -101,9 +126,16 @@ elementos ::= valor COMA elementos | valor
 variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
 ;
 
+error_declaracion ::= 
+    t_dato asignacion | 
+    t_dato 
+;
+
 declaracion ::= 
     t_dato asignacion PCOMA | 
-    t_dato PCOMA
+    t_dato PCOMA |
+    error_declaracion
+    {: System.out.println("Falta punto y coma"); :}
 ;
 
 asignacion ::=
@@ -122,6 +154,8 @@ parametros_opc ::= /*vacio*/ | parametros
 parametro ::= t_dato IDENTIFICADOR
 ;
 
+return ::= RETURN valor PCOMA;
+
 funcion ::=
     t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER 
     {:System.out.println("funcionzasa");:}
@@ -137,6 +171,52 @@ sentencias ::=
 ;
 
 sentencia ::=
-    variable IGUAL valor PCOMA |
+    asignacion PCOMA | // a = 1;
     IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA // a+=1;
+    | operacion PCOMA
+    | return 
+    | sentencia_if
+    | sentencia_if ELSE sentencia
+    | sentencia_llaves
+    | sentencia_while
+    | instruccion PCOMA
+    | sentencia_do
+    | BREAK PCOMA
+    | CONTINUE PCOMA
+    | sentencia_switch
+    | sentencia_for
+;
+
+sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
+;
+
+sentencia_if ::= IF PARIZQ operacion PARDER sentencia
+;
+
+sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia
+;
+
+argumentos ::= argumento | argumento COMA argumentos
+;
+
+argumento ::= valor
+;
+
+instruccion ::= 
+    READ PARIZQ argumentos PARDER | READ PARIZQ PARDER | WRITE PARIZQ argumentos PARDER
+; 
+
+sentencia_do ::= 
+    DO sentencia WHILE PARIZQ operacion PARDER PCOMA
+;
+
+sentencia_switch ::= SWITCH PARIZQ valor PARDER LLAVEIZQ cases LLAVEDER
+;
+
+cases ::= sentencia_case cases | sentencia_case;
+
+sentencia_case ::= CASE valor DOSPUNTOS sentencias | DEFAULT DOSPUNTOS sentencias
+;
+
+sentencia_for ::= FOR PARIZQ asignacion PCOMA operacion PCOMA operacion PARDER sentencia
 ;

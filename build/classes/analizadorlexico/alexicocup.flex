@@ -37,7 +37,9 @@ import java.util.Collections;
     //errores = new ArrayList<Symbol>();
     System.out.println("analizando archivo");
 %init}
-
+%eofval{
+    return new Symbol(sym.EOF, yychar, yyline, yytext());
+%eofval}
 %line
 %column
 
@@ -143,30 +145,33 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 
 ( void ) {return new Symbol(sym.VOID, yychar, yyline, yytext());}
 
+/*  INSTRUCCIONES   */
+
+( read ) {return new Symbol(sym.READ, yychar, yyline, yytext());}
+
+( write ) {return new Symbol(sym.WRITE, yychar, yyline, yytext());}
+
 {IDENTIFICADOR} {return new Symbol(sym.IDENTIFICADOR, yychar, yyline, yytext());}
 
-/* Operador Igual */
 ( "=" ) {return new Symbol(sym.IGUAL, yychar, yyline, yytext());}
 
-/* Operador Suma */
 ( "+" ) {return new Symbol(sym.SUMA, yychar, yyline, yytext());}
 
-/* Operador Resta */
 ( "-" ) {return new Symbol(sym.RESTA, yychar, yyline, yytext());}
 
-/* Operador Multiplicacion */
 ( "*" ) {return new Symbol(sym.MULTIPLICACION, yychar, yyline, yytext());}
 
-/* Operador Division */
 ( "/" ) {return new Symbol(sym.DIVISION, yychar, yyline, yytext());}
+
+( ":" ) {return new Symbol(sym.DOSPUNTOS, yychar, yyline, yytext());}
 
 // OPERADORES BOOLEANOS
 
-/* Operadores logicos */
+
 ( "&&" | "||" | "!" | "&" | "|" ) {return new Symbol(sym.OP_LOGICO, yychar, yyline, yytext());}
-/*Operadores Relacionales */
+
 ( ">" | "<" | "==" | "!=" | ">=" | "<=" | "<<" | ">>" ) {return new Symbol(sym.OP_RELACIONAL, yychar, yyline, yytext());}
-/*Operadores Booleanos*/
+
 ( true | false ) {return new Symbol(sym.OP_BOOLEANO, yychar, yyline, yytext());}
 
 // OPERADORES ARITMETICOS
@@ -191,8 +196,6 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 ( ";" ) {return new Symbol(sym.PCOMA, yychar, yyline, yytext());}
 
 ( "," ) {return new Symbol(sym.COMA, yychar, yyline, yytext());}
-
-
 
 {IGNORAR} {
  	//ignorar
