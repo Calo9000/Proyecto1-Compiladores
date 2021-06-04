@@ -53,20 +53,21 @@ parser code
 terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
     CHAR, FLOAT, DOUBLE, SHORT, IF, ELSE, DO, WHILE, FOR, BREAK, CASE, CONST, CONTINUE, 
     DEFAULT, RETURN, SWITCH, VOID, IDENTIFICADOR, IGUAL, SUMA, RESTA, MULTIPLICACION, DIVISION, 
-    OP_LOGICO, OP_RELACIONAL, OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, PARIZQ, PARDER, 
-    LLAVEIZQ, LLAVEDER, READ, WRITE, DOSPUNTOS,
+    OP_LOGICO, OP_RELACIONAL, OP_BOOLEANO, OP_ATRIBUCION, OP_INCDEC, OP_NEGACION, 
+    PARIZQ, PARDER, LLAVEIZQ, LLAVEDER, READ, WRITE, DOSPUNTOS,
     CORCHETEIZQ, CORCHETEDER, PCOMA, COMA, 
     ERROR
 ;
 
-non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, if, if_else,
+non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, declaracion_multiple, if, if_else,
     while, do_while, for, sentencia_booleana, variables, funciones, 
     declaraciones, programa, t_dato, cadena, parametros, parametros_opc, 
     parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion, valor_numerico,
-    array, variable, elementos, elemento, valor, operacion, operaciones, operador,
-    valor_especifico, error_declaracion, cosa, cosas, inicial, return, sentencia_if,
+    array, variable, elementos, elemento, valor, operacion, operaciones, operador, valor_especifico, 
+    error_declaracion, error_valor, error_return, error_declaracion_multiple, 
+    cosa, cosas, inicial, return, sentencia_if,
     sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
-    sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for
+    sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for, cosa_funcion
 ;
 
 precedence right INT;
@@ -76,6 +77,15 @@ precedence right LONG;
 precedence right FLOAT;
 precedence right DOUBLE;
 precedence right SHORT;
+precedence right NUMERO_FLOAT;
+precedence right NUMERO_HEX;
+precedence right NUMERO_OCT;
+precedence right NUMERO;
+precedence right LITERAL;
+precedence right RETURN;
+
+
+
 precedence left SUMA;
 precedence left RESTA;
 precedence left MULTIPLICACION;
@@ -86,7 +96,18 @@ precedence right OP_INCDEC;
 precedence right IDENTIFICADOR;
 precedence right WHILE;
 
+precedence left PARDER;
+precedence left PARIZQ;
+precedence left LLAVEDER;
+precedence left LLAVEIZQ;
+precedence left CORCHETEDER;
+precedence left CORCHETEIZQ;
+precedence left PCOMA;
+precedence left OP_LOGICO;
+precedence left OP_NEGACION;
+
 start with inicial;
+
 
 inicial ::= programa
 ;
@@ -95,7 +116,7 @@ programa ::= programa cosa | /*vacio*/
 ;
 
 
-cosa ::= declaracion | funcion
+cosa ::= declaracion | funcion | error:i {: System.out.println("Error, token encontrado fuera de lugar en línea: "+(iright+1)); :}
 ;
 
 declaraciones ::=  declaracion | declaracion declaraciones
@@ -107,13 +128,13 @@ t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
 valor_numerico ::= NUMERO | NUMERO_FLOAT | NUMERO_OCT | NUMERO_HEX
 ;
 
-operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL
+operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL 
 ;
 
-operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC
+operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor
 ;
 
-valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | variable
+valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | variable 
 ;
 
 array ::= LLAVEIZQ elementos LLAVEDER | LLAVEIZQ LLAVEDER
@@ -132,10 +153,19 @@ error_declaracion ::=
 ;
 
 declaracion ::= 
-    t_dato asignacion PCOMA | 
-    t_dato PCOMA |
+    t_dato declaracion_multiple PCOMA|
+    t_dato variable PCOMA | 
+    CONST t_dato IDENTIFICADOR asignacion PCOMA |
+    CONST t_dato IDENTIFICADOR PCOMA |
     error_declaracion
     {: System.out.println("Falta punto y coma"); :}
+;
+error_declaracion_multiple ::=
+    IDENTIFICADOR:i declaracion_multiple {: System.out.println("Falta una coma, en línea: "+(iright+1)); :}
+;
+
+declaracion_multiple ::= 
+    variable COMA declaracion_multiple | variable | error_declaracion_multiple
 ;
 
 asignacion ::=
@@ -154,7 +184,13 @@ parametros_opc ::= /*vacio*/ | parametros
 parametro ::= t_dato IDENTIFICADOR
 ;
 
-return ::= RETURN valor PCOMA | RETURN PCOMA
+error_return::=
+    RETURN valor:i {: System.out.println("Falta punto y coma, en línea: "+(iright+1)); :}|
+    RETURN error:i {: System.out.println("Return Inválido, en línea:  "+(iright+1)); :}|
+    RETURN:i {: System.out.println("Falta punto y coma, en línea: "+(iright+1)); :}
+;
+
+return ::= RETURN valor PCOMA | RETURN PCOMA | error_return
 ;
 
 funcion ::=
@@ -164,7 +200,10 @@ funcion ::=
     VOID IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER
 ;
 
-dentro_funcion ::= declaraciones | declaraciones sentencias | sentencias
+dentro_funcion ::= dentro_funcion cosa_funcion | /*vacio*/ 
+;
+
+cosa_funcion ::= declaracion | sentencia
 ;
 
 sentencias ::= 
@@ -200,7 +239,7 @@ sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia
 argumentos ::= argumento | argumento COMA argumentos
 ;
 
-argumento ::= valor
+argumento ::= valor 
 ;
 
 instruccion ::= 

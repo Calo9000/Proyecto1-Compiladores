@@ -476,7 +476,7 @@ public class AnalizadorLexico {
 
   /** Number of characters up to the start of the matched text. */
   @SuppressWarnings("unused")
-  private long yychar;
+  private int yychar;
 
   /** Whether the scanner is currently at the beginning of a line. */
   @SuppressWarnings("unused")
@@ -672,7 +672,7 @@ public class AnalizadorLexico {
       zzFinalHighSurrogate = 0;
       yyline = 0;
       yycolumn = 0;
-      yychar = 0L;
+      yychar = 0;
   }
 
 

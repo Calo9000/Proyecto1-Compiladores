@@ -1,13 +1,14 @@
-int a = 1;
+int a;
+int a[];
 int sumar(int a){
-	int a = 1;
-	int a = {1,2-(f/45),3,4+5};
+	a = 1;
+	a = {1,2-(f/45),3,4+5};
 	read();
 	cuarenta = 20 + 20;
 	i = 20+(2*f);
 	
 	if (a>0) {
-		return c;
+		return
 	}
 	return a;
 	
@@ -42,7 +43,4 @@ int sumar(int a){
 	}
 
 	if (a == 1) if (a == 2) a--; else a++; else a--;
-
-	
 }
-int b = "hola";
