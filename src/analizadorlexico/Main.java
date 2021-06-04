@@ -49,7 +49,6 @@ public class Main {
         
         String[] archivoPrueba = {"PruebaParser.txt"};
         parser.main(archivoPrueba);
-        System.out.println("Ejecutado!");
         
     }
     

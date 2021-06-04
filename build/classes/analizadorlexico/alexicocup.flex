@@ -114,6 +114,12 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 
 ( short ) {return new Symbol(sym.SHORT, yycolumn, yyline, yytext());}
 
+/*  INSTRUCCIONES   */
+
+( read ) {return new Symbol(sym.READ, yycolumn, yyline, yytext());}
+
+( write ) {return new Symbol(sym.WRITE, yycolumn, yyline, yytext());}
+
 /* Palabra reservada If */
 ( if ) {return new Symbol(sym.IF, yycolumn, yyline, yytext());}
 
@@ -145,11 +151,7 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 
 ( void ) {return new Symbol(sym.VOID, yycolumn, yyline, yytext());}
 
-/*  INSTRUCCIONES   */
 
-( read ) {return new Symbol(sym.READ, yycolumn, yyline, yytext());}
-
-( write ) {return new Symbol(sym.WRITE, yycolumn, yyline, yytext());}
 
 {IDENTIFICADOR} {return new Symbol(sym.IDENTIFICADOR, yycolumn, yyline, yytext());}
 

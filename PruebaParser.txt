@@ -21,11 +21,11 @@ int funcion1( int x
     x++;
 	}
 
-}  
+}
 
 
 
-int funcionBuena(int x, int y) { 
+int funcionBuena(int x, int y) {
 
   if if (X< 3) {
 	a= a + b;
@@ -62,20 +62,42 @@ int funcionBuena(int x, int y) {
 
    while (x<2)
     x= a+b; 
-  
-   
+	
+	int a;
 	 @//token invalido
 
    
 	  //falta corchetes
   
-	for (i = 1; i < 11; ++i)
-	{
+	for i = 1; i < 11; ++i)
+	
 		read();
-	}
+	
   return 0;
   
+  do a=1; while (i+2);
+  
+  read(a);
+  
+  switch a
+	{
+		case 1
+			break;
+		case 2:
+			break
+		default: 
+
+	}
 
 }
 
 @
+
+for i = 1; i < 11; ++i) read();
+
+int a;
+
+write(a);
+  
+	
+	
