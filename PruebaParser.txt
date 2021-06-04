@@ -7,7 +7,6 @@ a= 3;  // Error fuera de  lugar
 
 void funcion3( x, y){ 
 	 // error porque no hay tipo de funciones
-
 	if (x<7){
 	  x= g+6;
 	}
@@ -61,15 +60,20 @@ int funcionBuena(int x, int y) {
       x = f(x);	
     }  
 
-   while (x<2)  
+   while (x<2)
+    x= a+b; 
+  
+   
 
-	x= a+b; 
-	}  //falta corchetes
+
+   
+	  //falta corchetes
+  
 
 	
 
-} 
 
 
 
-} 
+
+ 
