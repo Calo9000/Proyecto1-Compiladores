@@ -206,7 +206,7 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
     //ignorar
 }
 {ERROR} {
-            System.out.println("Error causado por " + yytext() + " en la línea " + yyline);
+            //System.out.println("Error causado por " + yytext() + " en la línea " + yyline);
             return new Symbol(sym.ERROR, yycolumn, yyline, yytext());
          }
 

@@ -64,16 +64,18 @@ int funcionBuena(int x, int y) {
     x= a+b; 
   
    
-
+	 @//token invalido
 
    
 	  //falta corchetes
   
+	for (i = 1; i < 11; ++i)
+	{
+		read();
+	}
+  return 0;
+  
 
-	
+}
 
-
-
-
-
- 
+@

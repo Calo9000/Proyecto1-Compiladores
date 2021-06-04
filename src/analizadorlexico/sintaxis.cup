@@ -15,7 +15,7 @@ parser code
         return this.s;
 }
 
-    
+    /*
     public void report_error(String message, Object info) {
         StringBuilder m = new StringBuilder("Error");
         if (info instanceof java_cup.runtime.Symbol) {
@@ -29,11 +29,12 @@ parser code
         m.append(" : "+message);
         System.err.println(m);
     }
+    */
 
     public void report_fatal_error(String message, Object info) {
-        System.out.println("Error encontrado");
-        report_error(message, info);
-        System.exit(1);
+        java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+        System.out.println("Error fatal en línea " + (s.right+1));
+        
     }
     
     public static void main(String[] args){
@@ -68,7 +69,9 @@ non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, declar
     cosa, cosas, inicial, return, sentencia_if,
     sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
     sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for, cosa_funcion, parametro_error,
-    funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while
+    funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
+    error_cosa, token_invalido, error_sentencia_for, error_estructura_control, estructura_control,
+    token_control
 ;
 
 precedence right INT;
@@ -109,6 +112,7 @@ precedence left OP_NEGACION;
 precedence left CONST;
 precedence left VOID;
 precedence left COMA;
+precedence left ERROR;
 
 
 start with inicial;
@@ -121,7 +125,20 @@ programa ::= programa cosa | /*vacio*/
 ;
 
 
-cosa ::= declaracion | funcion | asignacion:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Asignación fuera de lugar"); :} 
+cosa ::= declaracion | funcion | error_cosa 
+;
+
+error_cosa ::= 
+    asignacion:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Asignación fuera de lugar"); :} |
+    error_simbolo_fuera_de_lugar:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Símbolo fuera de lugar"); :}
+;
+
+error_simbolo_fuera_de_lugar ::=
+    PARIZQ | PARDER 
+;
+
+token_invalido ::= 
+    ERROR:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Token inválido \""+i+"\"" ); :}
 ;
 
 
@@ -151,8 +168,8 @@ variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICAD
 ;
 
 error_declaracion ::= 
-    t_dato asignacion | 
-    t_dato 
+    t_dato asignacion:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :} | 
+    t_dato:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}    
 ;
 
 declaracion ::= 
@@ -160,8 +177,9 @@ declaracion ::=
     t_dato variable PCOMA | 
     CONST t_dato IDENTIFICADOR asignacion PCOMA |
     CONST t_dato IDENTIFICADOR PCOMA |
-    error_declaracion:i
-    {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}
+    error_declaracion |
+    token_invalido
+    
 ;
 error_declaracion_multiple ::=
     IDENTIFICADOR:i declaracion_multiple {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta una coma"); :}
@@ -231,16 +249,18 @@ sentencia ::=
     | return 
     | sentencia_if
     | sentencia_if ELSE sentencia
-    | sentencia_llaves
     | sentencia_while
-    | instruccion PCOMA
-    | sentencia_do
-    | BREAK PCOMA
-    | CONTINUE PCOMA
+    
     | sentencia_switch
     | sentencia_for
+    | instruccion PCOMA
+    | sentencia_llaves
+    | BREAK PCOMA
+    | CONTINUE PCOMA
+    | sentencia_do
     | ELSE:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Else solo"); :}
     | error_sentencia
+    
 ;
 
 error_sentencia ::=
@@ -252,18 +272,33 @@ error_sentencia ::=
     CONTINUE:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}
 ;
 
+/* ERROR CREISI
+token_control ::= 
+    IF | ELSE | WHILE | DO | SWITCH | FOR
+;
+error_estructura_control ::=
+    token_control:i error LLAVEIZQ sentencias LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Estructura de control inválida"); :}
+;
+*/
+
 sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
 ;
 
 sentencia_if ::= IF PARIZQ valor PARDER sentencia
     | error_sentencia_if
+    //| error_estructura_control
 ;
+
+
+
+sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia | WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia LLAVEDER 
+     | error_sentencia_while 
+;
+
+/* ERRORES CREISI */
 
 error_sentencia_if ::= 
     IF:i error LLAVEIZQ sentencias LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Estructura de If inválida"); :}
-;
-
-sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia | WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia LLAVEDER | error_sentencia_while 
 ;
 
 error_sentencia_while ::= 
@@ -299,5 +334,5 @@ cases ::= sentencia_case cases | sentencia_case;
 sentencia_case ::= CASE valor DOSPUNTOS sentencias | DEFAULT DOSPUNTOS sentencias
 ;
 
-sentencia_for ::= FOR PARIZQ asignacion PCOMA operacion PCOMA operacion PARDER sentencia
+sentencia_for ::= FOR PARIZQ asignacion PCOMA operacion PCOMA operacion PARDER sentencia | error_sentencia_for
 ;
