@@ -37,9 +37,10 @@ public class sym {
   public static final int NUMERO_HEX = 4;
   public static final int error = 1;
   public static final int COMA = 48;
+  public static final int MODULO = 49;
   public static final int BREAK = 18;
   public static final int VOID = 25;
-  public static final int ERROR = 49;
+  public static final int ERROR = 50;
   public static final int PCOMA = 47;
   public static final int SWITCH = 24;
   public static final int LITERAL = 6;
@@ -108,6 +109,7 @@ public class sym {
   "CORCHETEDER",
   "PCOMA",
   "COMA",
+  "MODULO",
   "ERROR"
   };
 }

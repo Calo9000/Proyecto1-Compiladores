@@ -35,7 +35,7 @@ import java.util.Collections;
 %init{
     //simbolos = new ArrayList<Symbol>();
     //errores = new ArrayList<Symbol>();
-    System.out.println("analizando archivo");
+    System.out.println("Analizando Archivo . . .");
 %init}
 %eofval{
     return new Symbol(sym.EOF, yycolumn, yyline, yytext());
@@ -166,6 +166,8 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 ( "/" ) {return new Symbol(sym.DIVISION, yycolumn, yyline, yytext());}
 
 ( ":" ) {return new Symbol(sym.DOSPUNTOS, yycolumn, yyline, yytext());}
+
+( "%" ) {return new Symbol(sym.MODULO, yycolumn, yyline, yytext());}
 
 // OPERADORES BOOLEANOS
 

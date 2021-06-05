@@ -1,8 +1,6 @@
 int a[], b, c;
 int main()
 {
-	if(x&&y) printf("hola");
 	
-}
-short c = ;
+	a  = (3/3)+(((5)*3)*(3/3));
 }
