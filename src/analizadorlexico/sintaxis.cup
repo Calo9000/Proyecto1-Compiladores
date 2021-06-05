@@ -71,7 +71,8 @@ non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, declar
     sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for, cosa_funcion, parametro_error,
     funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
     error_cosa, token_invalido, error_sentencia_for, error_estructura_control, estructura_control,
-    token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case
+    token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
+    error_operacion, error_asignacion
 ;
 
 precedence right INT;
@@ -134,7 +135,10 @@ error_cosa ::=
     //asignacion:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Asignación fuera de lugar"); :} |
     sentencia:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Sentencia no esperada fuera de una función"); :} |
     //sentencia_for:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Sentencia no esperada fuera de una función"); :} |
-    error_simbolo_fuera_de_lugar:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Símbolo fuera de lugar"); :}
+    error_simbolo_fuera_de_lugar:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Símbolo fuera de lugar"); :} |
+    cosa LLAVEDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Llave derecha suelta"); :} |
+    error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido "); :} |
+    error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido , se leyó hasta siguiente punto y coma"); :}
 ;
 
 error_simbolo_fuera_de_lugar ::=
@@ -155,7 +159,12 @@ valor_numerico ::= NUMERO | NUMERO_FLOAT | NUMERO_OCT | NUMERO_HEX
 operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL 
 ;
 
-operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor
+operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor 
+    | error_operacion
+;
+
+error_operacion ::=
+    valor operador:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error en operación"); :}
 ;
 
 valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | variable | IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER 
@@ -165,7 +174,7 @@ valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | v
 array ::= LLAVEIZQ elementos LLAVEDER | LLAVEIZQ LLAVEDER
 ;
 
-elementos ::= valor COMA elementos | valor
+elementos ::= valor COMA elementos | valor | valor:i valor {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se espera una coma"); :}   
 ;
 
 
@@ -173,8 +182,11 @@ variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICAD
 ;
 
 error_declaracion ::= 
-    t_dato asignacion:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :} | 
-    t_dato:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}    
+    t_dato variable:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :} 
+    | CONST t_dato IDENTIFICADOR asignacion:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :} 
+    | CONST t_dato IDENTIFICADOR:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :}
+    // | t_dato:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :}    
+    | CONST t_dato IDENTIFICADOR error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error no reconocido en declaración"); :} 
 ;
 
 declaracion ::= 
@@ -195,10 +207,13 @@ declaracion_multiple ::=
 ;
 
 asignacion ::=
-    variable IGUAL valor
+    variable IGUAL valor 
+    | error_asignacion
 ;
 
-
+error_asignacion ::= 
+    variable IGUAL:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta valor en asignacion"); :}
+;
 
 parametros ::= parametro COMA parametros | parametro
 ;
@@ -227,7 +242,7 @@ funcion ::=
     | 
     VOID IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER
     | 
-    funcion_error //{: System.out.println("funsion error"); :}
+    funcion_error
 ;
 
 
@@ -274,6 +289,7 @@ error_estructura_control ::=
 */
 
 sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
+    | LLAVEIZQ:i sentencias error {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error posiblemente causado por no cerrar la llave {"); :}
 ;
 
 sentencia_if ::= IF PARIZQ valor PARDER sentencia
@@ -288,7 +304,7 @@ sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia | WHILE PARIZQ opera
 ;
 
 
-argumentos ::= argumento | argumento COMA argumentos
+argumentos ::= argumento | argumento COMA argumentos | argumento:i argumento {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se esperaba una coma"); :}
 ;
 
 argumento ::= valor 
@@ -333,7 +349,7 @@ funcion_error ::=
     t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER:i dentro_funcion LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta llave"); :} 
     | t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion funcion:i {: System.out.println("Error en línea " + (iright+1)+ ": Falta cerrar llave de la función"); :}
     | t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion error:i {: System.out.println("Error en línea " + (iright+1)+ ": Error en función. Probablemente faltó cerrar la llave"); :}
-    | t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion error:i LLAVEDER {: System.out.println("Error en línea " + (iright+1)+ ": Error no reconocido dentro de función"); :}
+    | t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion error:i LLAVEDER {: System.out.println("Error en línea " + (iright+1)+ ": Error no reconocido dentro de la función"); :}
 ;
 
 error_parentesis ::=    
@@ -351,8 +367,8 @@ error_sentencia_if ::=
 
 error_sentencia_while ::= 
     WHILE:i operacion PARDER sentencia  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} | 
-    WHILE PARIZQ operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} |
-    WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia error:i{: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta cerrar llave"); :}
+    WHILE PARIZQ operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} 
+    //| WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia error:i{: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta cerrar llave"); :}
 ;
 
 error_sentencia_do ::= 
@@ -369,7 +385,9 @@ error_instruccion ::=
 ;
 
 error_sentencia_switch ::= 
-    SWITCH error_parentesis:i LLAVEIZQ cases LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:}
+    SWITCH error_parentesis:i LLAVEIZQ cases LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:} | 
+    SWITCH:i PARIZQ error PARDER LLAVEIZQ cases LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error en estructura del switch");:} |
+    SWITCH PARIZQ valor PARDER:i cases LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta la llave");:}
 ;
 
 error_sentencia_case ::= 
@@ -381,6 +399,7 @@ error_sentencia_case ::=
 error_sentencia_for ::= 
     FOR:i asignacion PCOMA operacion PCOMA operacion PARDER sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:} | 
     FOR PARIZQ asignacion PCOMA operacion PCOMA operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:} | 
-    FOR:i asignacion PCOMA operacion PCOMA operacion sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:} 
-    
+    FOR:i asignacion PCOMA operacion PCOMA operacion sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis");:} |
+    FOR:i PARIZQ error PARDER sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Estructura del for incorrecta");:} |
+    FOR:i PARIZQ error PCOMA error PARDER sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Estructura del for incorrecta");:} 
 ;

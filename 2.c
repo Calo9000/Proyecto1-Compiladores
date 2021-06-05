@@ -1,4 +1,8 @@
+int a[], b, c;
 int main()
 {
-	write();
+	if(x&&y) printf("hola");
+	
+}
+short c = ;
 }

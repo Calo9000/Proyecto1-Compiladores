@@ -47,7 +47,7 @@ public class Main {
         System.out.println("\n Ejecucion finalizada... \n");
         */
         
-        String[] archivoPrueba = {"PruebaParser.txt"};
+        String[] archivoPrueba = {"2.c"};
         parser.main(archivoPrueba);
         
     }
