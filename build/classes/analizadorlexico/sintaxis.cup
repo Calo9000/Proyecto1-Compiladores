@@ -137,8 +137,8 @@ error_cosa ::=
     //sentencia_for:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Sentencia no esperada fuera de una función"); :} |
     error_simbolo_fuera_de_lugar:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Símbolo fuera de lugar"); :} |
     cosa LLAVEDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Llave derecha suelta"); :} |
-    error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido "+ i); :} |
-    error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido " + i + ", se leyó hasta siguiente punto y coma"); :}
+    error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido "); :} |
+    error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido , se leyó hasta siguiente punto y coma"); :}
 ;
 
 error_simbolo_fuera_de_lugar ::=
