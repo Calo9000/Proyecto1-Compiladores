@@ -21,34 +21,15 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        /*
+        
         System.out.println("Ingrese el nombre del archivo de texto: \n");
         Scanner in = new Scanner(System.in);
         String entrada = in.nextLine();
-        BufferedReader bf = null;
-        try {
-            bf = new BufferedReader(new FileReader(entrada));
-            AnalizadorLexico a = new AnalizadorLexico(bf);
-            Yytoken token = null;
-            Symbol simbolo = null;
-            do {
-                token =  a.nextToken();
-                
-            } while (token != null);
-        } catch (Exception ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                bf.close();
-            } catch (IOException ex){
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+        String[] archivo = {entrada};
+        parser.main(archivo);
+
         System.out.println("\n Ejecucion finalizada... \n");
-        */
         
-        String[] archivoPrueba = {"2.c"};
-        parser.main(archivoPrueba);
         
     }
     

@@ -130,16 +130,13 @@ programa ::= programa cosa | /*vacio*/
 
 
 cosa ::= declaracion | funcion:i  
-    //{: System.out.println("FUNCION " + (iright+1)); :}
     | error_cosa 
 ;
 
 error_cosa ::= 
-    //asignacion:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Asignación fuera de lugar"); :} |
     sentencia:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Sentencia no esperada fuera de una función"); :} |
-    //sentencia_for:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Sentencia no esperada fuera de una función"); :} |
     error_simbolo_fuera_de_lugar:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Símbolo fuera de lugar"); :} |
-    cosa LLAVEDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Llave derecha suelta"); :} |
+    cosa LLAVEDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Llave derecha sin una llave izquierda respectiva."); :} |
     error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido "); :} |
     error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error desconocido, se leyó hasta siguiente punto y coma"); :}
 ;
@@ -190,8 +187,7 @@ variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICAD
 error_declaracion ::= 
     t_dato variable:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :} 
     | CONST t_dato IDENTIFICADOR asignacion:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :} 
-    | CONST t_dato IDENTIFICADOR:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :}
-    // | t_dato:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :}    
+    | CONST t_dato IDENTIFICADOR:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma en declaración"); :}  
     | CONST t_dato IDENTIFICADOR error:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error no reconocido en declaración"); :} 
 ;
 
@@ -219,7 +215,6 @@ asignacion ::=
 ;
 
 error_asignacion ::= 
-    //variable IGUAL:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta valor en asignacion"); :}
     variable IGUAL error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se esperaba expresión en asignación"); :}
 ;
 
@@ -287,14 +282,6 @@ sentencia ::=
 
 
 
-/* ERROR CREISI
-token_control ::= 
-    IF | ELSE | WHILE | DO | SWITCH | FOR
-;
-error_estructura_control ::=
-    token_control:i error LLAVEIZQ sentencias LLAVEDER {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Estructura de control inválida"); :}
-;
-*/
 
 sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
     | LLAVEIZQ:i sentencias error {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error posiblemente causado por no cerrar la llave {"); :}
@@ -302,7 +289,7 @@ sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
 
 sentencia_if ::= IF PARIZQ valor PARDER sentencia
     | error_sentencia_if
-    //| error_estructura_control
+    | error_estructura_control
 ;
 
 
@@ -375,7 +362,6 @@ error_sentencia_if ::=
 error_sentencia_while ::= 
     WHILE:i operacion PARDER sentencia  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} | 
     WHILE PARIZQ operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} 
-    //| WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia error:i{: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta cerrar llave"); :}
 ;
 
 error_sentencia_do ::= 
