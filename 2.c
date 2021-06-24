@@ -1,6 +1,13 @@
 int a[], b, c;
 int main()
 {
-	
-	a  = (3/3)+(((5)*3)*(3/3));
+  switch (a)
+	{
+		case 1:
+			break;
+		case 2:
+			break;
+		default: 
+			break;
+	}
 }

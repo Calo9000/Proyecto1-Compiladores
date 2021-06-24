@@ -79,7 +79,7 @@ int funcionBuena(int x, int y) {
   
   read(a);
   
-  switch a
+  switch (a)
 	{
 		case 1
 			break;
