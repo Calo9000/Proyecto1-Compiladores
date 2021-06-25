@@ -100,7 +100,7 @@ non terminal Object inicio, sentencias, sentencia, declaracion, declaracion_for,
     while, do_while, variables, funciones, valor_numerico, t_dato,
     programa, 
     parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion,
-    array, variable, elementos, elemento, valor, operacion, operaciones, operador, 
+    array, variable, elemento, valor, operacion, operaciones, operador, 
     error_declaracion, error_return, error_declaracion_multiple, 
     cosa, cosas, inicial, return, sentencia_if,
     sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
@@ -111,7 +111,7 @@ non terminal Object inicio, sentencias, sentencia, declaracion, declaracion_for,
     error_operacion, error_asignacion
 ;
 
-non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros
+non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros, elementos, resto_elementos
 ;
 
 precedence right INT;
@@ -223,12 +223,40 @@ error_operacion ::=
     valor operador:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error en operación"); :}
 ;
 
-valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion 
-| variable:var
-{:
-    if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
-:}
-| IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER | asignacion
+valor ::= PARIZQ valor:v PARDER {: RESULT = v; :} | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion 
+    | variable:var
+    {:
+        if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\"");
+        RESULT = var;
+    :}
+    | 
+    IDENTIFICADOR:id PARIZQ PARDER
+    {:
+        if(TablaSimbolos.get(id) == null){
+            System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Símbolo no definido \"" + id + "\"");
+        } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != 0){
+            System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Cantidad incorrecta de parámetros para \"" + id + "\"");
+        }
+    :}
+    | 
+    IDENTIFICADOR:id PARIZQ elementos:e PARDER
+    {:
+        if(TablaSimbolos.get(id) == null){
+            System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Símbolo no definido \"" + id + "\"");
+        } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != e.length){
+            System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Cantidad incorrecta de parámetros para \"" + id + "\"");
+        } else {
+            Object[] arr = new Object[e.length];
+            for (int i = 0; i< e.length; i++){
+                if (TablaSimbolos.get(e[i]) == null) System.out.println("Error en línea " + (eright+1)+": Símbolo no definido \"" + e[i] + "\"");
+                arr[i] = TablaSimbolos.get(e[i]).tipo;
+            }
+            System.out.println(Arrays.toString(arr) + " es diferente de " + Arrays.toString(TablaSimbolos.get(id).tipoParametros)+ "?");
+            if (!Arrays.equals(arr, TablaSimbolos.get(id).tipoParametros)) System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Tipos incorrectos de parámetros para \"" + id + "\"");
+        }
+    :}
+    |
+    asignacion
 ;
 
 
@@ -236,11 +264,39 @@ array ::= LLAVEIZQ elementos LLAVEDER | LLAVEIZQ LLAVEDER
     | LLAVEIZQ error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta llave derecha"); :}
 ;
 
-elementos ::= valor COMA elementos | valor 
+elementos ::= 
+    valor:v resto_elementos:e
+    {:
+        int len = e.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i+1] = e[i];
+        }
+        arr[0] = v;
+        RESULT = arr; 
+    :}
     | valor:i valor {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se espera una coma"); :}   
     | valor:i COMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se espera un valor después de la coma"); :}
 ;
 
+resto_elementos ::=
+    /* VACIO */
+    {:
+        Object[] arr = {};
+        RESULT = arr;
+    :}
+    |
+    COMA valor:v resto_elementos:e
+    {:
+        int len = e.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i+1] = e[i];
+        }
+        arr[0] = v;
+        RESULT = arr; 
+    :}
+;
 
 variable ::= IDENTIFICADOR:id {: RESULT =id; :} | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
 ;

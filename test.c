@@ -1,12 +1,12 @@
 int a, a, b;
 int b;
+char p;
 
-void main(){
-	int e;
-	f = x-3;
-	e =4;
+int hola(int a){
+	a = 2;
 }
 
-int main(){
-	a = a+2;
+void main(int x){
+	x = 4;
+	hola(p);
 }
