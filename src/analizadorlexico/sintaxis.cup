@@ -2,9 +2,54 @@ package analizadorlexico;
 
 import java_cup.runtime.Symbol;
 import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Arrays;
+
+action code
+{:
+:};
+
 
 parser code
 {:
+    public class simbolo {
+        Object id;
+        Object tipo;
+        Object valor;
+        private Integer cantidadParametros;
+        Object[] tipoParametros;
+
+        simbolo(Object id, Object tipo, Integer cp, Object [] tp){
+            this.id = id;
+            this.tipo = tipo;
+            this.cantidadParametros = cp;
+            this.tipoParametros = tp;
+        }
+
+        simbolo(Object id, Object tipo, Object valor){
+            this.id = id;
+            this.tipo = tipo;
+            this.valor = valor;
+        }
+
+        simbolo(Object id, Object tipo){
+            this.id = id;
+            this.tipo = tipo;
+        }
+
+        public String toString(){
+            String s = this.id.toString();
+            if (this.tipo != null) s += "\t" + this.tipo.toString();
+            if (this.valor != null) s += "\t" + this.valor.toString();
+            if (this.cantidadParametros != null) s += "\t" + this.cantidadParametros;
+            if (this.tipoParametros != null) s += "\t" + Arrays.toString(this.tipoParametros);
+            return s;
+        }
+    }
+
+    // TABLA DE SIMBOLOS
+    static HashMap<Object, simbolo> TablaSimbolos = new HashMap<Object, simbolo>();
+
     private Symbol s;
     
     public void syntax_error(Symbol s){
@@ -13,23 +58,8 @@ parser code
 
     public Symbol getS(){
         return this.s;
-}
-
-    /*
-    public void report_error(String message, Object info) {
-        StringBuilder m = new StringBuilder("Error");
-        if (info instanceof java_cup.runtime.Symbol) {
-            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
-            if (s.left >= 0) {                
-                m.append(" in line "+(s.left+1));
-                if (s.right >= 0)
-                    m.append(", column "+(s.right+1));
-            }
-        }
-        m.append(" : "+message);
-        System.err.println(m);
     }
-    */
+
 
     public void report_fatal_error(String message, Object info) {
         java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
@@ -43,6 +73,11 @@ parser code
             parser asin = new parser(
                     new AnalizadorLexicoCup( new FileReader(args[0])));
             asin.parse();
+            System.out.println("    -----TABLA DE SIMBOLOS-----");
+            //System.out.println(TablaSimbolos);
+            for (HashMap.Entry<Object, simbolo> entry : TablaSimbolos.entrySet()) {
+                System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString());
+            }
             System.out.println("\nPrograma analizado");
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -60,12 +95,13 @@ terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
     ERROR
 ;
 
-non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, declaracion_multiple, if, if_else,
-    while, do_while, for, sentencia_booleana, variables, funciones, 
-    declaraciones, programa, t_dato, cadena, parametros, parametros_opc, 
-    parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion, valor_numerico,
-    array, variable, elementos, elemento, valor, operacion, operaciones, operador, valor_especifico, 
-    error_declaracion, error_valor, error_return, error_declaracion_multiple, 
+
+non terminal Object inicio, sentencias, sentencia, declaracion, declaracion_for,
+    while, do_while, variables, funciones, valor_numerico, t_dato,
+    programa, 
+    parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion,
+    array, variable, elementos, elemento, valor, operacion, operaciones, operador, 
+    error_declaracion, error_return, error_declaracion_multiple, 
     cosa, cosas, inicial, return, sentencia_if,
     sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
     sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for, cosa_funcion, parametro_error,
@@ -73,6 +109,9 @@ non terminal inicio, sentencias, sentencia, declaracion, declaracion_for, declar
     error_cosa, token_invalido, error_sentencia_for, error_estructura_control, estructura_control,
     token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
     error_operacion, error_asignacion
+;
+
+non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros
 ;
 
 precedence right INT;
@@ -150,10 +189,27 @@ token_invalido ::=
 ;
 
 
-t_dato ::= LONG | INT | CHAR | FLOAT | DOUBLE | SHORT
+t_dato ::= 
+    LONG:t {: RESULT = t; :} | 
+    INT:t {: RESULT = t; :} | 
+    CHAR:t {: RESULT = t; :} | 
+    FLOAT:t {: RESULT = t; :} | 
+    DOUBLE:t {: RESULT = t; :} | 
+    SHORT:t {: RESULT = t; :}
 ;
 
-valor_numerico ::= NUMERO | NUMERO_FLOAT | NUMERO_OCT | NUMERO_HEX
+valor_numerico ::=
+    NUMERO:n
+        {: RESULT = n; :}
+    | 
+    NUMERO_FLOAT:n
+        {: RESULT = n; :}
+    | 
+    NUMERO_OCT:n
+        {: RESULT = n; :} 
+    | 
+    NUMERO_HEX:n
+        {: RESULT = n; :}
 ;
 
 operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL | MODULO
@@ -167,7 +223,7 @@ error_operacion ::=
     valor operador:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error en operación"); :}
 ;
 
-valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL | array | operacion | variable | IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER | asignacion
+valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion | variable | IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER | asignacion
 ;
 
 
@@ -181,7 +237,7 @@ elementos ::= valor COMA elementos | valor
 ;
 
 
-variable ::= IDENTIFICADOR | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
+variable ::= IDENTIFICADOR:id {: RESULT =id; :} | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
 ;
 
 error_declaracion ::= 
@@ -192,10 +248,31 @@ error_declaracion ::=
 ;
 
 declaracion ::= 
-    t_dato declaracion_multiple PCOMA|
-    t_dato variable PCOMA | 
-    CONST t_dato IDENTIFICADOR asignacion PCOMA |
-    CONST t_dato IDENTIFICADOR PCOMA |
+    t_dato:tipo declaracion_multiple:d 
+    {: 
+        int len = d.length;
+        for (int i = 0; i<len; i++){
+            TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+        }
+    :} PCOMA
+    |
+    t_dato:tipo variable:id PCOMA 
+    {:
+        TablaSimbolos.put(id, new simbolo(id, tipo));
+        //System.out.println(id + " " + tipo);
+    :}
+    |
+    CONST t_dato:tipo IDENTIFICADOR:id asignacion:valor PCOMA
+    {:
+        System.out.println("hola");
+        //TablaSimbolos.put(id, new simbolo(id, tipo, valor));
+    :}
+    |
+    CONST t_dato:tipo IDENTIFICADOR:id PCOMA
+    {:
+        TablaSimbolos.put(id, new simbolo(id, tipo));
+    :}
+    |
     error_declaracion |
     token_invalido
     
@@ -205,11 +282,42 @@ error_declaracion_multiple ::=
 ;
 
 declaracion_multiple ::= 
-    variable COMA declaracion_multiple | variable | error_declaracion_multiple
+    variable:v resto_declaracion_multiple:d 
+    {: 
+        int len = d.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i] = d[i];
+        }
+        arr[len] = v;
+        RESULT = arr;
+    :} 
+;
+
+resto_declaracion_multiple ::=
+    /* vacio */
+    {:
+        Object[] arr = {};
+        RESULT = arr;
+    :}
+    |
+    COMA variable:v resto_declaracion_multiple:r
+    {:
+        int len = r.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i] = r[i];
+        }
+        arr[len] = v;
+        RESULT = arr; 
+    :}
 ;
 
 asignacion ::=
-    variable IGUAL valor 
+    variable IGUAL valor:v 
+    {:
+        RESULT = v;
+    :}
     | t_dato variable IGUAL valor:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": No se puede declarar y asignar una variable en la misma sentencia"); :}
     | error_asignacion
 ;
@@ -218,13 +326,58 @@ error_asignacion ::=
     variable IGUAL error:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se esperaba expresión en asignación"); :}
 ;
 
-parametros ::= parametro COMA parametros | parametro
+parametros_opc ::= 
+    /*vacio*/ 
+    {:
+        Object[] arr = {};
+        RESULT = arr;
+    :}
+    | 
+    parametros:p
+    {:
+        RESULT = p;
+    :}
 ;
 
-parametros_opc ::= /*vacio*/ | parametros
+parametros ::= 
+    parametro:p resto_parametros:ps
+    {:
+        int len = ps.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i+1] = ps[i];
+        }
+        arr[0] = p;
+        RESULT = arr; 
+    :}
 ;
 
-parametro ::= t_dato variable | parametro_error
+resto_parametros ::= 
+    /* vacio */
+    {:
+        Object[] arr = {};
+        RESULT = arr;    
+    :}    
+    |
+    COMA parametro:p resto_parametros:ps
+    {:
+        int len = ps.length;
+        Object[] arr = new Object[len+1];
+        for (int i = 0; i<len; i++){
+            arr[i+1] = ps[i];
+        }
+        arr[0] = p;
+        RESULT = arr; 
+    :}
+;
+
+parametro ::= 
+    t_dato:t variable
+    {:
+        RESULT = t;
+    :}
+    | 
+    parametro_error
 ;
 
 parametro_error ::= 
@@ -241,9 +394,15 @@ error_return::=
 ;
 
 funcion ::=
-    t_dato IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER
+    t_dato:tipo IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
+    {:
+        TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+    :}
     | 
-    VOID IDENTIFICADOR PARIZQ parametros_opc PARDER LLAVEIZQ dentro_funcion LLAVEDER
+    VOID:v IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
+    {:
+        TablaSimbolos.put(id, new simbolo(id, v, p.length, p));
+    :}
     | 
     funcion_error
 ;
