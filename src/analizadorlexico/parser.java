@@ -2122,6 +2122,11 @@ class CUP$parser$actions {
           case 44: // valor ::= variable 
             {
               Object RESULT =null;
+		int varleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int varright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object var = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor",22, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2316,8 +2321,12 @@ class CUP$parser$actions {
 		Object[] d = (Object[])((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
  
         int len = d.length;
-        for (int i = 0; i<len; i++){
-            TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+        for (int i = 0; i<len; i++) {
+            if (TablaSimbolos.get(d[i]) != null){
+                System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + d[i] + "\"");
+            } else {
+                TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+            }
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",70, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -2352,8 +2361,11 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-        TablaSimbolos.put(id, new simbolo(id, tipo));
-        //System.out.println(id + " " + tipo);
+        if (TablaSimbolos.get(id) != null){
+            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+        } else {
+            TablaSimbolos.put(id, new simbolo(id, tipo));
+        }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",3, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2489,10 +2501,14 @@ class CUP$parser$actions {
           case 73: // asignacion ::= variable IGUAL valor 
             {
               Object RESULT =null;
+		int varleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int varright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object var = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
 		int vleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int vright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object v = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
+        if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
         RESULT = v;
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("asignacion",17, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -2728,7 +2744,11 @@ class CUP$parser$actions {
 		int pright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
 		Object[] p = (Object[])((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
 		
-        TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+        if(TablaSimbolos.get(id) != null){
+            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+        } else {
+            TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+        }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("funcion",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-7)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2821,9 +2841,6 @@ class CUP$parser$actions {
           case 100: // sentencia ::= asignacion PCOMA 
             {
               Object RESULT =null;
-		int ileft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
-		int iright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
-		Object i = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("sentencia",2, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

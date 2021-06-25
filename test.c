@@ -1,6 +1,12 @@
-int a;
+int a, a, b;
+int b;
 
-void main(int x, char c, int f){
+void main(){
 	int e;
-	f = 5;
+	f = x-3;
+	e =4;
+}
+
+int main(){
+	a = a+2;
 }

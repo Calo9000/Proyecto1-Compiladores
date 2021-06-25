@@ -19,3 +19,5 @@
 123r  //error o separa el numero del IDENTIFICADOR r
 ID123  //se espera que se clasifique como un ID
 014255689  //se espera que no se acepte como octal y de un error
+
+int 1

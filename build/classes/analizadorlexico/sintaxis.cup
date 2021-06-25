@@ -223,7 +223,12 @@ error_operacion ::=
     valor operador:i  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error en operación"); :}
 ;
 
-valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion | variable | IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER | asignacion
+valor ::= PARIZQ valor PARDER | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion 
+| variable:var
+{:
+    if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
+:}
+| IDENTIFICADOR PARIZQ PARDER | IDENTIFICADOR PARIZQ elementos PARDER | asignacion
 ;
 
 
@@ -251,15 +256,22 @@ declaracion ::=
     t_dato:tipo declaracion_multiple:d 
     {: 
         int len = d.length;
-        for (int i = 0; i<len; i++){
-            TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+        for (int i = 0; i<len; i++) {
+            if (TablaSimbolos.get(d[i]) != null){
+                System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + d[i] + "\"");
+            } else {
+                TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+            }
         }
     :} PCOMA
     |
     t_dato:tipo variable:id PCOMA 
     {:
-        TablaSimbolos.put(id, new simbolo(id, tipo));
-        //System.out.println(id + " " + tipo);
+        if (TablaSimbolos.get(id) != null){
+            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+        } else {
+            TablaSimbolos.put(id, new simbolo(id, tipo));
+        }
     :}
     |
     CONST t_dato:tipo IDENTIFICADOR:id asignacion:valor PCOMA
@@ -314,8 +326,9 @@ resto_declaracion_multiple ::=
 ;
 
 asignacion ::=
-    variable IGUAL valor:v 
+    variable:var IGUAL valor:v 
     {:
+        if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
         RESULT = v;
     :}
     | t_dato variable IGUAL valor:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": No se puede declarar y asignar una variable en la misma sentencia"); :}
@@ -396,7 +409,11 @@ error_return::=
 funcion ::=
     t_dato:tipo IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
     {:
-        TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+        if(TablaSimbolos.get(id) != null){
+            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+        } else {
+            TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+        }
     :}
     | 
     VOID:v IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
@@ -420,7 +437,8 @@ sentencias ::=
 ;
 
 sentencia ::=
-    asignacion:i PCOMA  | // a = 1;
+    asignacion PCOMA  
+    |
     IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA // a+=1;
     | valor PCOMA
     | return 
