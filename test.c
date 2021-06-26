@@ -1,12 +1,6 @@
-int a, a, b;
-int b;
-char p;
-
-int hola(int a){
-	a = 2;
-}
-
-void main(int x){
-	x = 4;
-	hola(p);
-}
+int x;
+int y;
+ 
+int main(int a, int b, int c){
+  y = x;
+ }

@@ -4,6 +4,8 @@ import java_cup.runtime.Symbol;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Stack;
+import java.util.ArrayList;
 
 action code
 {:
@@ -40,15 +42,72 @@ parser code
         public String toString(){
             String s = this.id.toString();
             if (this.tipo != null) s += "\t" + this.tipo.toString();
-            if (this.valor != null) s += "\t" + this.valor.toString();
+            if (this.valor != null) s += "\tvalor: " + this.valor.toString();
             if (this.cantidadParametros != null) s += "\t" + this.cantidadParametros;
             if (this.tipoParametros != null) s += "\t" + Arrays.toString(this.tipoParametros);
             return s;
         }
     }
 
+    // Clase de Registro Semántico
+    public class RS {
+        String clase; // Si es id, while, for, do (data object), operador, etc.
+        Object nombre; // el símbolo. si es un operador el simbolo va aquí. si es una variale o funcion, es el id 
+        Object tipo; // tipo de dato
+        Object valor; // valor si es un DO
+    
+        RS(String clase){
+            this.clase = clase;
+        }
+
+        RS(String clase, Object nombre){
+            this.clase = clase;
+            this.nombre = nombre;
+        }
+
+        RS(String clase, Object nombre, Object tipo, Object valor){
+            this.clase = clase;
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.valor = valor;
+        }
+    
+    
+    }
+
+    // Clase de pila semantica
+    public class PilaSemantica {
+        private Stack<RS> ps;
+
+        public PilaSemantica(){
+            ps = new Stack<>();
+        }
+
+        public RS peek(){
+            return ps.peek();
+        }
+
+        public void push(String clase, Object nombre){
+            //System.out.println("haciendo push de " + nombre);
+            ps.push(new RS(clase, nombre));
+        }
+
+        public void push(RS r){
+            //System.out.println("haciendo push de " + r.nombre);
+            ps.push(r);
+        }
+
+        public RS pop(){
+            //System.out.println("haciendo pop de " + ps.peek().nombre);
+            return ps.pop();
+        }
+    }
+
     // TABLA DE SIMBOLOS
     static HashMap<Object, simbolo> TablaSimbolos = new HashMap<Object, simbolo>();
+
+    // PILA SEMANTICA
+    PilaSemantica pilaSemantica = new PilaSemantica();
 
     private Symbol s;
     
@@ -96,8 +155,8 @@ terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
 ;
 
 
-non terminal Object inicio, sentencias, sentencia, declaracion, declaracion_for,
-    while, do_while, variables, funciones, valor_numerico, t_dato,
+non terminal Object sentencias, sentencia, declaracion, declaracion_for,
+    while, funciones, valor_numerico, t_dato,
     programa, 
     parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion,
     array, variable, elemento, valor, operacion, operaciones, operador, 
@@ -190,12 +249,41 @@ token_invalido ::=
 
 
 t_dato ::= 
-    LONG:t {: RESULT = t; :} | 
-    INT:t {: RESULT = t; :} | 
-    CHAR:t {: RESULT = t; :} | 
-    FLOAT:t {: RESULT = t; :} | 
-    DOUBLE:t {: RESULT = t; :} | 
-    SHORT:t {: RESULT = t; :}
+    LONG:t 
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo", t);    
+    :}
+    | 
+    INT:t
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo",t);    
+    :}
+    | 
+    CHAR:t
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo",t);
+    :}
+    | 
+    FLOAT:t
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo",t);    
+    :}
+    | 
+    DOUBLE:t
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo",t);    
+    :} 
+    | 
+    SHORT:t
+    {: 
+        //RESULT = t; 
+        pilaSemantica.push("tipo", t);
+    :}
 ;
 
 valor_numerico ::=
@@ -226,8 +314,9 @@ error_operacion ::=
 valor ::= PARIZQ valor:v PARDER {: RESULT = v; :} | valor_numerico | LITERAL:l {: RESULT = l; :} | array | operacion 
     | variable:var
     {:
-        if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\"");
-        RESULT = var;
+        RS v = pilaSemantica.pop();
+        pilaSemantica.push("do", v.nombre);
+        if (TablaSimbolos.get(v.nombre) == null || TablaSimbolos.get(v.nombre).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
     :}
     | 
     IDENTIFICADOR:id PARIZQ PARDER
@@ -297,7 +386,8 @@ resto_elementos ::=
     :}
 ;
 
-variable ::= IDENTIFICADOR:id {: RESULT =id; :} | IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
+variable ::= IDENTIFICADOR:id {: pilaSemantica.push("id", id); :} 
+//| IDENTIFICADOR CORCHETEIZQ CORCHETEDER | IDENTIFICADOR CORCHETEIZQ NUMERO CORCHETEDER
 ;
 
 error_declaracion ::= 
@@ -315,23 +405,34 @@ declaracion ::=
             if (TablaSimbolos.get(d[i]) != null){
                 System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + d[i] + "\"");
             } else {
-                TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+                if (tipo.toString().equals("int")){
+                    TablaSimbolos.put(d[i], new simbolo(d[i], tipo, 0));
+                } else {
+                    TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+                    // Tal vez aqui se deberia usar la pila semantica
+                }
             }
         }
     :} PCOMA
     |
-    t_dato:tipo variable:id PCOMA 
+    t_dato variable:v PCOMA 
     {:
-        if (TablaSimbolos.get(id) != null){
-            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+        RS id = pilaSemantica.pop();
+        RS tipo = pilaSemantica.pop(); 
+     
+        if (TablaSimbolos.get(id.nombre) != null){
+            System.out.println("Error en línea " + (vright+1) + ": Múltiple declaración de símbolo  \"" + v + "\"");
         } else {
-            TablaSimbolos.put(id, new simbolo(id, tipo));
+            if (tipo.nombre.equals("int")){
+                TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre,0));
+            } else {
+                TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre));
+            }
         }
     :}
     |
     CONST t_dato:tipo IDENTIFICADOR:id asignacion:valor PCOMA
     {:
-        System.out.println("hola");
         //TablaSimbolos.put(id, new simbolo(id, tipo, valor));
     :}
     |
@@ -381,10 +482,13 @@ resto_declaracion_multiple ::=
 ;
 
 asignacion ::=
-    variable:var IGUAL valor:v 
+    variable:var IGUAL valor 
     {:
-        if (TablaSimbolos.get(var) == null || TablaSimbolos.get(var).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + var + "\""); 
-        RESULT = v;
+        RS valor = pilaSemantica.pop();
+        RS variable = pilaSemantica.pop();
+
+        if (TablaSimbolos.get(variable.nombre) == null || TablaSimbolos.get(variable.nombre).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + variable.nombre + "\""); 
+        pilaSemantica.push(valor);
     :}
     | t_dato variable IGUAL valor:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": No se puede declarar y asignar una variable en la misma sentencia"); :}
     | error_asignacion
@@ -396,53 +500,30 @@ error_asignacion ::=
 
 parametros_opc ::= 
     /*vacio*/ 
-    {:
-        Object[] arr = {};
-        RESULT = arr;
-    :}
+
     | 
     parametros:p
-    {:
-        RESULT = p;
-    :}
+
 ;
 
 parametros ::= 
     parametro:p resto_parametros:ps
-    {:
-        int len = ps.length;
-        Object[] arr = new Object[len+1];
-        for (int i = 0; i<len; i++){
-            arr[i+1] = ps[i];
-        }
-        arr[0] = p;
-        RESULT = arr; 
-    :}
+
 ;
 
 resto_parametros ::= 
     /* vacio */
-    {:
-        Object[] arr = {};
-        RESULT = arr;    
-    :}    
+   
     |
     COMA parametro:p resto_parametros:ps
-    {:
-        int len = ps.length;
-        Object[] arr = new Object[len+1];
-        for (int i = 0; i<len; i++){
-            arr[i+1] = ps[i];
-        }
-        arr[0] = p;
-        RESULT = arr; 
-    :}
+
 ;
 
 parametro ::= 
     t_dato:t variable
     {:
-        RESULT = t;
+        RS variable = pilaSemantica.pop();
+        //RESULT = t;
     :}
     | 
     parametro_error
@@ -462,18 +543,28 @@ error_return::=
 ;
 
 funcion ::=
-    t_dato:tipo IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
+    t_dato:t IDENTIFICADOR:i PARIZQ parametros_opc:p PARDER
+    LLAVEIZQ dentro_funcion LLAVEDER
     {:
+        System.out.println("XD");
+        ArrayList<Object> arr = new ArrayList<Object>();
+        while(pilaSemantica.peek().clase != "id"){
+            arr.add(pilaSemantica.pop().nombre);
+        }
+
+        Object id = pilaSemantica.pop().nombre;
+        Object tipo = pilaSemantica.pop().nombre;
+
         if(TablaSimbolos.get(id) != null){
-            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+            System.out.println("Error en línea " + (iright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
         } else {
-            TablaSimbolos.put(id, new simbolo(id, tipo, p.length, p));
+            TablaSimbolos.put(id, new simbolo(id, tipo, arr.size(), arr.toArray()));
         }
     :}
     | 
     VOID:v IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
     {:
-        TablaSimbolos.put(id, new simbolo(id, v, p.length, p));
+        //TablaSimbolos.put(id, new simbolo(id, v, p.length, p));
     :}
     | 
     funcion_error
