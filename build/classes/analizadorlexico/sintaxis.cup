@@ -136,6 +136,11 @@ parser code
     // PILA SEMANTICA
     PilaSemantica pilaSemantica = new PilaSemantica();
 
+    //  CODIGO ENSAMBLADOR
+    static String ensamblador = "";
+
+    static String code_segment = "global main \nsection .text \nmain:";
+
     private Symbol s;
     
     public void syntax_error(Symbol s){
@@ -161,10 +166,22 @@ parser code
             asin.parse();
             System.out.println("    -----TABLA DE SIMBOLOS-----");
             //System.out.println(TablaSimbolos);
+            // AGREGAR LAS VARIABLES AL ENSAMBLADOR            
+            String data_segment = "section .data\n";
+
             for (HashMap.Entry<Object, simbolo> entry : TablaSimbolos.entrySet()) {
-                System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString());
+                System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString()); // imprimir tabla de simbolos
+                simbolo s = entry.getValue();
+                if (s.cantidadParametros == null) { // es una variable
+                    data_segment +=  s.id.toString() + " dd " + s.valor.toString() + "\n";
+                }
             }
             System.out.println("\nPrograma analizado");
+            
+            ensamblador = data_segment + ensamblador;
+            ensamblador += code_segment;
+
+            System.out.println(ensamblador);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -316,7 +333,8 @@ t_dato ::=
 
 valor_numerico ::=
     NUMERO:n
-        {: RESULT = n; :}
+        {: RESULT = n;
+            pilaSemantica.push("numero", n); :}
     | 
     NUMERO_FLOAT:n
         {: RESULT = n; :}
@@ -328,10 +346,20 @@ valor_numerico ::=
         {: RESULT = n; :}
 ;
 
-operador ::= SUMA | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL | MODULO
+operador ::= SUMA {: pilaSemantica.push("operador", "add"); :} | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL | MODULO
 ;
 
-operacion ::= valor operador valor | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor 
+operacion ::= 
+    valor operador valor 
+    {:
+        String op2 = pilaSemantica.pop().nombre.toString();
+        String operador = pilaSemantica.pop().nombre.toString();
+        String op1 = pilaSemantica.pop().nombre.toString();
+
+        code_segment += "\nmov rax, " + op1 + "\n" + operador + " rax, " + op2 + "\nmov " + op1 + ", rax";
+        
+    :}
+    | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor 
     | error_operacion
 ;
 

@@ -1659,6 +1659,11 @@ public class parser extends java_cup.runtime.lr_parser {
     // PILA SEMANTICA
     PilaSemantica pilaSemantica = new PilaSemantica();
 
+    //  CODIGO ENSAMBLADOR
+    static String ensamblador = "";
+
+    static String code_segment = "global main \nsection .text \nmain:";
+
     private Symbol s;
     
     public void syntax_error(Symbol s){
@@ -1684,10 +1689,22 @@ public class parser extends java_cup.runtime.lr_parser {
             asin.parse();
             System.out.println("    -----TABLA DE SIMBOLOS-----");
             //System.out.println(TablaSimbolos);
+            // AGREGAR LAS VARIABLES AL ENSAMBLADOR            
+            String data_segment = "section .data\n";
+
             for (HashMap.Entry<Object, simbolo> entry : TablaSimbolos.entrySet()) {
-                System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString());
+                System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString()); // imprimir tabla de simbolos
+                simbolo s = entry.getValue();
+                if (s.cantidadParametros == null) { // es una variable
+                    data_segment +=  s.id.toString() + " dd " + s.valor.toString() + "\n";
+                }
             }
             System.out.println("\nPrograma analizado");
+            
+            ensamblador = data_segment + ensamblador;
+            ensamblador += code_segment;
+
+            System.out.println(ensamblador);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1993,7 +2010,8 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		 RESULT = n; 
+		 RESULT = n;
+            pilaSemantica.push("numero", n); 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor_numerico",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2038,7 +2056,7 @@ class CUP$parser$actions {
           case 26: // operador ::= SUMA 
             {
               Object RESULT =null;
-
+		 pilaSemantica.push("operador", "add"); 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("operador",20, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2101,7 +2119,14 @@ class CUP$parser$actions {
           case 33: // operacion ::= valor operador valor 
             {
               Object RESULT =null;
+		
+        String op2 = pilaSemantica.pop().nombre.toString();
+        String operador = pilaSemantica.pop().nombre.toString();
+        String op1 = pilaSemantica.pop().nombre.toString();
 
+        code_segment += "\nmov rax, " + op1 + "\n" + operador + " rax, " + op2 + "\nmov " + op1 + ", rax";
+        
+    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("operacion",18, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
