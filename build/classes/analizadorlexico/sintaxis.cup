@@ -72,7 +72,24 @@ parser code
             this.valor = valor;
         }
     
-    
+        public boolean equals(Object o){
+            if (o == this) {
+                return true;
+            }
+            if (!(o instanceof RS)) {
+                return false;
+            }
+            RS rs = (RS) o;
+
+            return rs.clase.equals(this.clase); 
+                    /*
+                    &&
+                    rs.nombre.equals(this.nombre) &&
+                    rs.tipo.equals(this.tipo) &&
+                    rs.valor.equals(this.valor);
+                    */
+
+        }
     }
 
     // Clase de pila semantica
@@ -85,6 +102,11 @@ parser code
 
         public RS peek(){
             return ps.peek();
+        }
+
+        public void push(String clase){
+            //System.out.println("haciendo push de " + clase);
+            ps.push(new RS(clase));
         }
 
         public void push(String clase, Object nombre){
@@ -101,6 +123,11 @@ parser code
             //System.out.println("haciendo pop de " + ps.peek().nombre);
             return ps.pop();
         }
+
+        public int search(String clase){
+            return ps.search(new RS(clase));
+        }
+
     }
 
     // TABLA DE SIMBOLOS
@@ -156,7 +183,7 @@ terminal NUMERO, NUMERO_OCT, NUMERO_HEX, NUMERO_FLOAT, LITERAL, LONG, INT,
 
 
 non terminal Object sentencias, sentencia, declaracion, declaracion_for,
-    while, funciones, valor_numerico, t_dato,
+    while, valor_numerico, t_dato,
     programa, 
     parametro, dentro_funcion, cuerpo, funcion, tipo, asignacion,
     array, variable, elemento, valor, operacion, operaciones, operador, 
@@ -167,7 +194,7 @@ non terminal Object sentencias, sentencia, declaracion, declaracion_for,
     funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
     error_cosa, token_invalido, error_sentencia_for, error_estructura_control, estructura_control,
     token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
-    error_operacion, error_asignacion
+    error_operacion, error_asignacion, do
 ;
 
 non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros, elementos, resto_elementos
@@ -214,6 +241,7 @@ precedence left CONST;
 precedence left VOID;
 precedence left COMA;
 precedence left ERROR;
+precedence left WHILE;
 
 
 start with inicial;
@@ -330,17 +358,24 @@ valor ::= PARIZQ valor:v PARDER {: RESULT = v; :} | valor_numerico | LITERAL:l {
     | 
     IDENTIFICADOR:id PARIZQ elementos:e PARDER
     {:
+        int len = e.length;
+        ArrayList<Object> arr = new ArrayList<Object>();
+
+        for(int i = 0; i<len; i++){
+            RS rs = pilaSemantica.pop();
+            if (TablaSimbolos.get(rs.nombre) == null){
+                System.out.println("Error en línea " + (eright+1)+": Símbolo no definido \"" + rs.nombre + "\"");
+            } else {
+                arr.add(TablaSimbolos.get(rs.nombre).tipo);
+            }
+        }
+
         if(TablaSimbolos.get(id) == null){
             System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Símbolo no definido \"" + id + "\"");
-        } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != e.length){
+        } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != len){
             System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Cantidad incorrecta de parámetros para \"" + id + "\"");
         } else {
-            Object[] arr = new Object[e.length];
-            for (int i = 0; i< e.length; i++){
-                if (TablaSimbolos.get(e[i]) == null) System.out.println("Error en línea " + (eright+1)+": Símbolo no definido \"" + e[i] + "\"");
-                arr[i] = TablaSimbolos.get(e[i]).tipo;
-            }
-            if (!Arrays.equals(arr, TablaSimbolos.get(id).tipoParametros)) System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Tipos incorrectos de parámetros para \"" + id + "\"");
+            if (!Arrays.equals(arr.toArray(), TablaSimbolos.get(id).tipoParametros)) System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Tipos incorrectos de parámetros para \"" + id + "\"");
         }
     :}
     |
@@ -355,13 +390,15 @@ array ::= LLAVEIZQ elementos LLAVEDER | LLAVEIZQ LLAVEDER
 elementos ::= 
     valor:v resto_elementos:e
     {:
+        
         int len = e.length;
         Object[] arr = new Object[len+1];
         for (int i = 0; i<len; i++){
             arr[i+1] = e[i];
         }
         arr[0] = v;
-        RESULT = arr; 
+        RESULT = arr;
+        
     :}
     | valor:i valor {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se espera una coma"); :}   
     | valor:i COMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Se espera un valor después de la coma"); :}
@@ -398,21 +435,32 @@ error_declaracion ::=
 ;
 
 declaracion ::= 
-    t_dato:tipo declaracion_multiple:d 
+    t_dato:t declaracion_multiple:d 
     {: 
-        int len = d.length;
-        for (int i = 0; i<len; i++) {
-            if (TablaSimbolos.get(d[i]) != null){
-                System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + d[i] + "\"");
+        ArrayList<Object> arr = new ArrayList<Object>();
+        
+        while(pilaSemantica.peek().clase != "tipo"){
+            arr.add(pilaSemantica.pop().nombre);
+        }
+
+        Object tipo = pilaSemantica.pop().nombre;
+
+        for (int i = 0; i<arr.size(); i++) {
+            if (TablaSimbolos.get(arr.get(i)) != null){
+                System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + arr.get(i) + "\"");
             } else {
                 if (tipo.toString().equals("int")){
-                    TablaSimbolos.put(d[i], new simbolo(d[i], tipo, 0));
+                    TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo, 0));
                 } else {
-                    TablaSimbolos.put(d[i], new simbolo(d[i], tipo));
+                    TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo));
                     // Tal vez aqui se deberia usar la pila semantica
                 }
             }
         }
+
+        /*
+        int len = d.length;
+        */
     :} PCOMA
     |
     t_dato variable:v PCOMA 
@@ -421,7 +469,7 @@ declaracion ::=
         RS tipo = pilaSemantica.pop(); 
      
         if (TablaSimbolos.get(id.nombre) != null){
-            System.out.println("Error en línea " + (vright+1) + ": Múltiple declaración de símbolo  \"" + v + "\"");
+            System.out.println("Error en línea " + (vright+1) + ": Múltiple declaración de símbolo  \"" + id.nombre + "\"");
         } else {
             if (tipo.nombre.equals("int")){
                 TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre,0));
@@ -499,11 +547,15 @@ error_asignacion ::=
 ;
 
 parametros_opc ::= 
+    {:
+        pilaSemantica.push("stop");
+    :}
     /*vacio*/ 
-
     | 
+    {:
+        pilaSemantica.push("stop");
+    :}
     parametros:p
-
 ;
 
 parametros ::= 
@@ -543,20 +595,21 @@ error_return::=
 ;
 
 funcion ::=
-    t_dato:t variable:i PARIZQ parametros_opc:p PARDER
+    t_dato:t IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER
     LLAVEIZQ dentro_funcion LLAVEDER
     {:
-        System.out.println("XD");
         ArrayList<Object> arr = new ArrayList<Object>();
-        while(pilaSemantica.peek().clase != "id"){
-            arr.add(pilaSemantica.pop().nombre);
+        while(pilaSemantica.peek().clase != "stop"){
+            RS rs = pilaSemantica.pop();
+            if(rs.clase == "tipo") arr.add(rs.nombre);
         }
 
-        Object id = pilaSemantica.pop().nombre;
+        pilaSemantica.pop(); // saca el stop
+
         Object tipo = pilaSemantica.pop().nombre;
 
         if(TablaSimbolos.get(id) != null){
-            System.out.println("Error en línea " + (iright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
+            System.out.println("Error en línea " + (idright+1) + ": Múltiple declaración de símbolo  \"" + id + "\"");
         } else {
             TablaSimbolos.put(id, new simbolo(id, tipo, arr.size(), arr.toArray()));
         }
@@ -583,21 +636,39 @@ sentencias ::=
 ;
 
 sentencia ::=
-    asignacion PCOMA  
+    asignacion PCOMA
+    {:
+        pilaSemantica.pop();
+    :}
     |
-    IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA // a+=1;
+    IDENTIFICADOR OP_ATRIBUCION NUMERO PCOMA
     | valor PCOMA
     | return 
     | sentencia_if
     | sentencia_if ELSE sentencia
     | sentencia_while
+    {:
+        while (pilaSemantica.peek().clase != "while") pilaSemantica.pop();
+        pilaSemantica.pop();
+    :}
     | sentencia_switch
     | sentencia_for
     | instruccion PCOMA
     | sentencia_llaves
-    | BREAK PCOMA
-    | CONTINUE PCOMA
+    | BREAK:i PCOMA
+    {:
+        //System.out.println(pilaSemantica.search("while"));
+        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un break solito :(");
+    :}
+    | CONTINUE:i PCOMA
+    {:
+        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un continue solito :(");
+    :}
     | sentencia_do
+    {:
+        while (pilaSemantica.peek().clase != "do") pilaSemantica.pop();
+        pilaSemantica.pop();
+    :}
     | ELSE:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un else solito :( "); :}
     | error_sentencia
     
@@ -617,7 +688,7 @@ sentencia_if ::= IF PARIZQ valor PARDER sentencia
 
 
 
-sentencia_while ::= WHILE PARIZQ operacion PARDER sentencia | WHILE PARIZQ operacion PARDER LLAVEIZQ sentencia LLAVEDER 
+sentencia_while ::= WHILE PARIZQ operacion PARDER {: pilaSemantica.push("while"); :} sentencia
      | error_sentencia_while 
 ;
 
@@ -633,8 +704,11 @@ instruccion ::=
     | error_instruccion
 ; 
 
+do ::= DO {: pilaSemantica.push("do"); :}
+;
+
 sentencia_do ::= 
-    DO sentencia WHILE PARIZQ operacion PARDER PCOMA
+    do sentencia WHILE PARIZQ operacion PARDER PCOMA
     | error_sentencia_do
 ;
 
@@ -688,8 +762,8 @@ error_sentencia_while ::=
 ;
 
 error_sentencia_do ::= 
-    DO sentencia WHILE error_parentesis:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :}|
-    DO sentencia WHILE PARIZQ operacion PARDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}   
+    do sentencia WHILE error_parentesis:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :}|
+    do sentencia WHILE PARIZQ operacion PARDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}   
 ;
 
 error_instruccion ::=
