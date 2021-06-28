@@ -6,18 +6,14 @@ global main
 
 section .text
 main:
+mov y, 10
 cmp x, y
-jl label1	;if
-jge label2	;else
+jl label1
 
 label1:
 mov rax, x
 add rax, 1
 mov x, rax
-ret
-
-label2:
-mov rax, x
-sub rax, 1
-mov x, rax
+cmp x, y
+jl label1		;si no se cumple la condicion, vuelve a ejecutar
 ret

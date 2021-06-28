@@ -55,7 +55,7 @@ parser code
         String clase; // Si es id, while, for, do (data object), operador, etc.
         Object nombre; // el símbolo. si es un operador el simbolo va aquí. si es una variale o funcion, es el id 
         Object tipo; // tipo de dato
-        Object valor; // valor si es un DO
+        Object[] valor; // valor si es un DO
     
         RS(String clase){
             this.clase = clase;
@@ -66,7 +66,13 @@ parser code
             this.nombre = nombre;
         }
 
-        RS(String clase, Object nombre, Object tipo, Object valor){
+        RS(String clase, Object nombre, Object[] valor){
+            this.clase = clase;
+            this.nombre = nombre;
+            this.valor = valor;
+        }
+
+        RS(String clase, Object nombre, Object tipo, Object[] valor){
             this.clase = clase;
             this.nombre = nombre;
             this.tipo = tipo;
@@ -106,22 +112,27 @@ parser code
         }
 
         public void push(String clase){
-            //System.out.println("haciendo push de " + clase);
+            System.out.println("haciendo push de " + clase);
             ps.push(new RS(clase));
         }
 
         public void push(String clase, Object nombre){
-            //System.out.println("haciendo push de " + nombre);
+            System.out.println("haciendo push de " + nombre);
             ps.push(new RS(clase, nombre));
         }
 
+        public void push(String clase, Object nombre, Object[] valor){
+            System.out.println("haciendo push de " + nombre);
+            ps.push(new RS(clase, nombre, valor));
+        }
+
         public void push(RS r){
-            //System.out.println("haciendo push de " + r.nombre);
+            System.out.println("haciendo push de " + r.nombre);
             ps.push(r);
         }
 
         public RS pop(){
-            //System.out.println("haciendo pop de " + ps.peek().nombre);
+            System.out.println("haciendo pop de " + ps.peek().nombre + " " + ps.peek().clase);
             return ps.pop();
         }
 
@@ -256,7 +267,7 @@ non terminal Object sentencias, sentencia, declaracion, declaracion_for,
     funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
     error_cosa, token_invalido, error_sentencia_for,
     token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
-    error_operacion, error_asignacion, do, condicion, sentencia_if_else
+    error_operacion, error_asignacion, do, condicion, sentencia_if_else, while_condicion
 ;
 
 non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros, elementos, resto_elementos
@@ -779,6 +790,7 @@ sentencia ::=
     :}
     | sentencia_while
     {:
+        System.out.println(pilaSemantica.search("while"));
         while (pilaSemantica.peek().clase != "while") pilaSemantica.pop();
         pilaSemantica.pop();
     :}
@@ -789,11 +801,11 @@ sentencia ::=
     | BREAK:i PCOMA
     {:
         //System.out.println(pilaSemantica.search("while"));
-        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un break solito :(");
+        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("sentencia_do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un break solito :(");
     :}
     | CONTINUE:i PCOMA
     {:
-        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un continue solito :(");
+        if (pilaSemantica.search("while") == -1 && pilaSemantica.search("sentencia_do") == -1) System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un continue solito :(");
     :}
     | sentencia_do
     {:
@@ -863,7 +875,8 @@ condicion ::=
         String op1 = pilaSemantica.pop().nombre.toString();
         String operacion = op.toString();
 
-        pilaSemantica.push("condicion", operacion);
+        Object[] a = {op1, op2};
+        pilaSemantica.push("condicion", operacion, a);
 
         labels.append(labelStack.peek(),"\ncmp " + op1 + ", " + op2);
 
@@ -890,7 +903,6 @@ condicion ::=
                 break;
         }
 
-        labels.append(labelStack.peek(),"\t;if");
 
         labelStack.push(label);
         labels.append(labelStack.peek(),"\n\n" + label + ":");
@@ -898,9 +910,53 @@ condicion ::=
     :}
 ;
 
+while ::= WHILE {: pilaSemantica.push("while"); :}
+;
 
-sentencia_while ::= WHILE PARIZQ operacion PARDER {: pilaSemantica.push("while"); :} sentencia
-     | error_sentencia_while 
+while_condicion ::=
+    while PARIZQ condicion PARDER
+    {: 
+        pilaSemantica.push("while"); 
+    :}
+;
+
+sentencia_while ::= while_condicion sentencia
+    {:
+        while (pilaSemantica.peek().clase != "condicion") pilaSemantica.pop();
+        RS condicion = pilaSemantica.pop();
+        String operacion = condicion.nombre.toString();
+        Object[] operadores = condicion.valor;
+
+        labels.append(labelStack.peek(),"\ncmp " + operadores[0].toString() + ", "+ operadores[1].toString());
+
+        String label = labelStack.peek();
+
+        switch(operacion){
+            case "<":
+                labels.append(labelStack.peek(),"\njl " + label);
+                break;
+            case ">":
+                labels.append(labelStack.peek(),"\njg " + label);
+                break;
+            case "<=":
+                labels.append(labelStack.peek(),"\njle " + label);
+                break;
+            case ">=":
+                labels.append(labelStack.peek(),"\njge " + label);
+                break;
+            case "==":
+                labels.append(labelStack.peek(),"\nje " + label);
+                break;
+            case "!=":
+                labels.append(labelStack.peek(),"\njne " + label);
+                break;
+        }
+
+        labels.append(labelStack.peek(),"\t\t;si no se cumple la condicion, vuelve a ejecutar");
+        labels.append(labelStack.peek(),"\nret");
+        labelStack.pop();
+    :}
+    | error_sentencia_while 
 ;
 
 
@@ -919,7 +975,7 @@ do ::= DO {: pilaSemantica.push("sentencia_do"); :}
 ;
 
 sentencia_do ::= 
-    do sentencia WHILE PARIZQ operacion PARDER PCOMA
+    do sentencia while PARIZQ operacion PARDER PCOMA
     | error_sentencia_do
 ;
 
@@ -968,13 +1024,13 @@ error_sentencia_if ::=
 ;
 
 error_sentencia_while ::= 
-    WHILE:i operacion PARDER sentencia  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} | 
-    WHILE PARIZQ operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} 
+    while:i operacion PARDER sentencia  {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} | 
+    while PARIZQ operacion:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :} 
 ;
 
 error_sentencia_do ::= 
-    do sentencia WHILE error_parentesis:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :}|
-    do sentencia WHILE PARIZQ operacion PARDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}   
+    do sentencia while error_parentesis:i PCOMA {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta paréntesis"); :}|
+    do sentencia while PARIZQ operacion PARDER:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Falta punto y coma"); :}   
 ;
 
 error_instruccion ::=

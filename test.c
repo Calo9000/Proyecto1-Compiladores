@@ -2,10 +2,8 @@ int x, y;
 int a;
  
 int main(){
-	
-	if(x < y){
+	y = 10;
+	while (x<y){
 		x++;
-	} else {
-		x--;
 	}
 }
