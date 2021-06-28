@@ -1659,27 +1659,27 @@ public class parser extends java_cup.runtime.lr_parser {
         }
 
         public void push(String clase){
-            System.out.println("haciendo push de " + clase);
+            //System.out.println("haciendo push de " + clase);
             ps.push(new RS(clase));
         }
 
         public void push(String clase, Object nombre){
-            System.out.println("haciendo push de " + nombre);
+            //System.out.println("haciendo push de " + nombre);
             ps.push(new RS(clase, nombre));
         }
 
         public void push(String clase, Object nombre, Object[] valor){
-            System.out.println("haciendo push de " + nombre);
+            //System.out.println("haciendo push de " + nombre);
             ps.push(new RS(clase, nombre, valor));
         }
 
         public void push(RS r){
-            System.out.println("haciendo push de " + r.nombre);
+            //System.out.println("haciendo push de " + r.nombre);
             ps.push(r);
         }
 
         public RS pop(){
-            System.out.println("haciendo pop de " + ps.peek().nombre + " " + ps.peek().clase);
+            //System.out.println("haciendo pop de " + ps.peek().nombre + " " + ps.peek().clase);
             return ps.pop();
         }
 
