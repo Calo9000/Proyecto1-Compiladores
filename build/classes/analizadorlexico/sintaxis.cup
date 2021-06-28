@@ -256,7 +256,7 @@ non terminal Object sentencias, sentencia, declaracion, declaracion_for,
     funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
     error_cosa, token_invalido, error_sentencia_for,
     token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
-    error_operacion, error_asignacion, do, condicion
+    error_operacion, error_asignacion, do, condicion, sentencia_if_else
 ;
 
 non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros, elementos, resto_elementos
@@ -768,7 +768,15 @@ sentencia ::=
     | valor PCOMA
     | return 
     | sentencia_if
-    | sentencia_if ELSE sentencia
+    {:
+        while (pilaSemantica.peek().clase != "condicion") pilaSemantica.pop();
+        pilaSemantica.pop();
+    :}
+    | sentencia_if_else sentencia
+    {:
+        labels.append(labelStack.peek(),"\nret");
+        labelStack.pop();
+    :}
     | sentencia_while
     {:
         while (pilaSemantica.peek().clase != "while") pilaSemantica.pop();
@@ -797,7 +805,42 @@ sentencia ::=
     
 ;
 
+sentencia_if_else ::=
+    sentencia_if ELSE
+    {:
+        while (pilaSemantica.peek().clase != "condicion") pilaSemantica.pop();
+        String operacion = pilaSemantica.pop().nombre.toString();
+        String label = "label" + labels.getNumeroLabel();
 
+        
+        switch(operacion){
+            case "<":
+                labels.append(labelStack.peek(),"\njge " + label);
+                break;
+            case ">":
+                labels.append(labelStack.peek(),"\njle " + label);
+                break;
+            case "<=":
+                labels.append(labelStack.peek(),"\njg " + label);
+                break;
+            case ">=":
+                labels.append(labelStack.peek(),"\njl " + label);
+                break;
+            case "==":
+                labels.append(labelStack.peek(),"\njne " + label);
+                break;
+            case "!=":
+                labels.append(labelStack.peek(),"\nje " + label);
+                break;
+        }
+        
+        labels.append(labelStack.peek(),"\t;else");
+
+        labelStack.push(label);
+        labels.append(labelStack.peek(),"\n\n" + label + ":");
+
+    :}
+;
 
 
 sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
@@ -808,9 +851,6 @@ sentencia_if ::= IF PARIZQ condicion PARDER sentencia
     {:
         labels.append(labelStack.peek(),"\nret");
         labelStack.pop();
-        while (pilaSemantica.peek().clase != "condicion") pilaSemantica.pop();
-        pilaSemantica.pop();
-        
     :}
     | error_sentencia_if
 ;
@@ -821,9 +861,9 @@ condicion ::=
     {:
         String op2 = pilaSemantica.pop().nombre.toString();
         String op1 = pilaSemantica.pop().nombre.toString();
-        pilaSemantica.push("condicion");
-
         String operacion = op.toString();
+
+        pilaSemantica.push("condicion", operacion);
 
         labels.append(labelStack.peek(),"\ncmp " + op1 + ", " + op2);
 
@@ -849,6 +889,8 @@ condicion ::=
                 labels.append(labelStack.peek(),"\njne " + label);
                 break;
         }
+
+        labels.append(labelStack.peek(),"\t;if");
 
         labelStack.push(label);
         labels.append(labelStack.peek(),"\n\n" + label + ":");

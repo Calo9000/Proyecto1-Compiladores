@@ -7,9 +7,8 @@ global main
 section .text
 main:
 cmp x, y
-jl label1
-cmp x, y
-je label2
+jl label1	;if
+jge label2	;else
 
 label1:
 mov rax, x

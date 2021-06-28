@@ -5,6 +5,7 @@ int main(){
 	
 	if(x < y){
 		x++;
+	} else {
+		x--;
 	}
-	if(x==y) x--;
 }
