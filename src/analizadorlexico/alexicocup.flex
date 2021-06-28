@@ -175,7 +175,7 @@ ERROR = ({EXP_DIGITO})+({EXP_ALPHA})+ | .
 ( "&&" | "||" | "&" | "|" ) {return new Symbol(sym.OP_LOGICO, yycolumn, yyline, yytext());}
 ("!") {return new Symbol(sym.OP_NEGACION, yycolumn, yyline, yytext());}
 
-( ">" | "<" | "==" | "!=" | ">=" | "<=" | "<<" | ">>" ) {return new Symbol(sym.OP_RELACIONAL, yycolumn, yyline, yytext());}
+( ">" | "<" | "==" | "!=" | ">=" | "<=" ) {return new Symbol(sym.OP_RELACIONAL, yycolumn, yyline, yytext());}
 
 ( true | false ) {return new Symbol(sym.OP_BOOLEANO, yycolumn, yyline, yytext());}
 

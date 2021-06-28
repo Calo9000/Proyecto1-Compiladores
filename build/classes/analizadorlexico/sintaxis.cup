@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.ArrayList;
+import java.io.FileWriter;
 
 action code
 {:
@@ -139,7 +140,39 @@ parser code
     //  CODIGO ENSAMBLADOR
     static String ensamblador = "";
 
-    static String code_segment = "global main \nsection .text \nmain:";
+    static String code_segment = "global main \n\nsection .text";
+
+    public static class Labels {
+        private HashMap<String,String> l;
+
+        public Labels() {
+            l = new HashMap<String,String>();
+        }
+
+        public void append(String key, String value){
+            String v = this.l.get(key);
+            if(v != null) value = v + value;
+            this.l.put(key, value);
+        }
+
+        public String getLabels(){
+            String str = "";
+            for (HashMap.Entry<String, String> entry : this.l.entrySet()) {
+                //System.out.println("printeando " + entry.getKey());
+                str += entry.getValue();
+            }
+            return str;
+        }
+
+        public String getNumeroLabel(){
+            return String.valueOf(l.size());
+        }
+
+    }
+
+    static Labels labels = new Labels();
+
+    static Stack<String> labelStack = new Stack<>();
 
     private Symbol s;
     
@@ -160,14 +193,20 @@ parser code
     
     public static void main(String[] args){
         try {
+            //  INICIALIZAR PILA DE LABELS EN MAIN
+            labelStack.push("\nmain");
+
+            // AGREGAR LA LABEL DE MAIN
+            labels.append(labelStack.peek(), "\nmain:");
             System.out.println("Abriendo archivo " + args[0]);
             parser asin = new parser(
                     new AnalizadorLexicoCup( new FileReader(args[0])));
             asin.parse();
             System.out.println("    -----TABLA DE SIMBOLOS-----");
-            //System.out.println(TablaSimbolos);
-            // AGREGAR LAS VARIABLES AL ENSAMBLADOR            
+
+            // AGREGAR LAS VARIABLES A LA SECCION DE DATOS            
             String data_segment = "section .data\n";
+
 
             for (HashMap.Entry<Object, simbolo> entry : TablaSimbolos.entrySet()) {
                 System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString()); // imprimir tabla de simbolos
@@ -178,10 +217,16 @@ parser code
             }
             System.out.println("\nPrograma analizado");
             
-            ensamblador = data_segment + ensamblador;
-            ensamblador += code_segment;
+            ensamblador = data_segment + code_segment+ labels.getLabels();
+            //ensamblador += code_segment;
 
             System.out.println(ensamblador);
+
+            //  CREA EL ARCHIVO
+            FileWriter texto = new FileWriter(args[0].split("\\.")[0] + ".asm", false);
+            texto.write(ensamblador);
+            texto.close();
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -209,9 +254,9 @@ non terminal Object sentencias, sentencia, declaracion, declaracion_for,
     sentencia_llaves, sentencia_while, instruccion, argumentos, argumento, sentencia_do,
     sentencia_else, sentencia_switch, cases, sentencia_case, sentencia_for, cosa_funcion, parametro_error,
     funcion_error, error_sentencia_if, error_sentencia,error_sentencia_while,error_simbolo_fuera_de_lugar,
-    error_cosa, token_invalido, error_sentencia_for, error_estructura_control, estructura_control,
+    error_cosa, token_invalido, error_sentencia_for,
     token_control, error_parentesis, error_sentencia_do, error_instruccion, error_sentencia_switch, error_sentencia_case,
-    error_operacion, error_asignacion, do
+    error_operacion, error_asignacion, do, condicion
 ;
 
 non terminal Object[] declaracion_multiple, resto_declaracion_multiple, parametros, parametros_opc, resto_parametros, elementos, resto_elementos
@@ -346,7 +391,14 @@ valor_numerico ::=
         {: RESULT = n; :}
 ;
 
-operador ::= SUMA {: pilaSemantica.push("operador", "add"); :} | RESTA | MULTIPLICACION | DIVISION | OP_LOGICO | OP_RELACIONAL | MODULO
+operador ::= 
+    SUMA {: pilaSemantica.push("operador", "add"); :} | 
+    RESTA {: pilaSemantica.push("operador", "sub"); :} | 
+    MULTIPLICACION {: pilaSemantica.push("operador", "mul"); :} | 
+    DIVISION {: pilaSemantica.push("operador", "div"); :} | 
+    OP_LOGICO:op {: pilaSemantica.push("operador", op.toString()); :} | 
+    OP_RELACIONAL:op {: pilaSemantica.push("operador", op.toString()); :} | 
+    MODULO
 ;
 
 operacion ::= 
@@ -356,10 +408,41 @@ operacion ::=
         String operador = pilaSemantica.pop().nombre.toString();
         String op1 = pilaSemantica.pop().nombre.toString();
 
-        code_segment += "\nmov rax, " + op1 + "\n" + operador + " rax, " + op2 + "\nmov " + op1 + ", rax";
-        
+        if(operador.equals("mul") || operador.equals("div")){
+            labels.append(labelStack.peek(),"\nmov eax, " + op1 +
+                            "\nmov ebx, " + op2 + 
+                            "\n" + operador + " ebx" + 
+                            "\nmov rcx, eax"); // PONE EL RESULTADO EN RCX
+        } else {
+            labels.append(labelStack.peek(),"\nmov rax, " + op1 + 
+                            "\nmov rbx, " + op2 + 
+                            "\n" + operador + " rax, rbx" + 
+                            "\nmov rcx, rax"); // LO MUEVE A OTRO REGISTRO PARA QUE LO UTILICE ???
+        }
+        pilaSemantica.push("op");
+        /*
+        if(operador.equals("add")){
+            pilaSemantica.push("do", Integer.toString(Integer.parseInt(op1) + Integer.parseInt(op2)));
+        } else if(operador.equals("sub")){
+            pilaSemantica.push("do", Integer.toString(Integer.parseInt(op1) - Integer.parseInt(op2)));
+        }
+        */
     :}
-    | OP_INCDEC variable | variable OP_INCDEC | OP_NEGACION valor 
+    | OP_INCDEC variable | 
+    variable OP_INCDEC:op
+    {:
+        String operador = "";
+        if(op.toString().equals("++")){
+            operador = "add";
+        } else {
+            operador = "sub";
+        }
+        String id = pilaSemantica.pop().nombre.toString();
+        labels.append(labelStack.peek(),"\nmov rax, " + id +
+                        "\n" + operador + " rax, 1" + 
+                        "\nmov " + id + ", rax");
+    :}
+    | OP_NEGACION valor 
     | error_operacion
 ;
 
@@ -563,7 +646,19 @@ asignacion ::=
         RS valor = pilaSemantica.pop();
         RS variable = pilaSemantica.pop();
 
+        String op1 = variable.nombre.toString();
+        String op2 = "";
+
         if (TablaSimbolos.get(variable.nombre) == null || TablaSimbolos.get(variable.nombre).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + variable.nombre + "\""); 
+        
+        if (valor.clase.equals("op")){
+            op2 = "rcx";
+        } else {
+            op2 = valor.nombre.toString();
+        }
+        
+        labels.append(labelStack.peek(),"\nmov " + op1 + ", " + op2);
+
         pilaSemantica.push(valor);
     :}
     | t_dato variable IGUAL valor:i {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": No se puede declarar y asignar una variable en la misma sentencia"); :}
@@ -694,7 +789,7 @@ sentencia ::=
     :}
     | sentencia_do
     {:
-        while (pilaSemantica.peek().clase != "do") pilaSemantica.pop();
+        while (pilaSemantica.peek().clase != "sentencia_do") pilaSemantica.pop();
         pilaSemantica.pop();
     :}
     | ELSE:i sentencia {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Hay un else solito :( "); :}
@@ -709,11 +804,57 @@ sentencia_llaves ::= LLAVEIZQ sentencias LLAVEDER
     | LLAVEIZQ:i sentencias error {: System.out.println("Error en línea " + (iright+1)+", columna " + (ileft+1) + ": Error posiblemente causado por no cerrar la llave {"); :}
 ;
 
-sentencia_if ::= IF PARIZQ valor PARDER sentencia
+sentencia_if ::= IF PARIZQ condicion PARDER sentencia
+    {:
+        labels.append(labelStack.peek(),"\nret");
+        labelStack.pop();
+        while (pilaSemantica.peek().clase != "condicion") pilaSemantica.pop();
+        pilaSemantica.pop();
+        
+    :}
     | error_sentencia_if
-    | error_estructura_control
 ;
 
+// condicion recibe dos parametros y hace una operacion booleana o relacional
+condicion ::= 
+    valor OP_RELACIONAL:op valor
+    {:
+        String op2 = pilaSemantica.pop().nombre.toString();
+        String op1 = pilaSemantica.pop().nombre.toString();
+        pilaSemantica.push("condicion");
+
+        String operacion = op.toString();
+
+        labels.append(labelStack.peek(),"\ncmp " + op1 + ", " + op2);
+
+        String label = "label" + labels.getNumeroLabel();
+
+        switch(operacion){
+            case "<":
+                labels.append(labelStack.peek(),"\njl " + label);
+                break;
+            case ">":
+                labels.append(labelStack.peek(),"\njg " + label);
+                break;
+            case "<=":
+                labels.append(labelStack.peek(),"\njle " + label);
+                break;
+            case ">=":
+                labels.append(labelStack.peek(),"\njge " + label);
+                break;
+            case "==":
+                labels.append(labelStack.peek(),"\nje " + label);
+                break;
+            case "!=":
+                labels.append(labelStack.peek(),"\njne " + label);
+                break;
+        }
+
+        labelStack.push(label);
+        labels.append(labelStack.peek(),"\n\n" + label + ":");
+
+    :}
+;
 
 
 sentencia_while ::= WHILE PARIZQ operacion PARDER {: pilaSemantica.push("while"); :} sentencia
@@ -732,7 +873,7 @@ instruccion ::=
     | error_instruccion
 ; 
 
-do ::= DO {: pilaSemantica.push("do"); :}
+do ::= DO {: pilaSemantica.push("sentencia_do"); :}
 ;
 
 sentencia_do ::= 

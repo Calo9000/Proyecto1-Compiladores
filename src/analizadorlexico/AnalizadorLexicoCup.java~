@@ -442,7 +442,7 @@ public class AnalizadorLexicoCup implements java_cup.runtime.Scanner {
   public AnalizadorLexicoCup(java.io.Reader in) {
       //simbolos = new ArrayList<Symbol>();
     //errores = new ArrayList<Symbol>();
-    System.out.println("analizando archivo");
+    System.out.println("Analizando Archivo . . .");
     this.zzReader = in;
   }
 

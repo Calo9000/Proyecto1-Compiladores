@@ -1,12 +1,10 @@
 int x, y;
-
-int hola(int a){
-	x++;
-}
+int a;
  
 int main(){
-	x + y;  
-	// 	mov rax, x
-	//	add rax, 1
-	//	???
+	
+	if(x < y){
+		x++;
+	}
+	if(x==y) x--;
 }
