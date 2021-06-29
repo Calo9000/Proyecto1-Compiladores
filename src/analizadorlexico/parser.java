@@ -1583,6 +1583,13 @@ public class parser extends java_cup.runtime.lr_parser {
             this.valor = valor;
         }
 
+        RS(String clase, Object nombre, Object tipo){
+            this.clase = clase;
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.valor = valor;
+        }
+
         RS(String clase, Object nombre, Object tipo, Object[] valor){
             this.clase = clase;
             this.nombre = nombre;
@@ -1623,27 +1630,32 @@ public class parser extends java_cup.runtime.lr_parser {
         }
 
         public void push(String clase){
-            System.out.println("haciendo push de " + clase);
+            //System.out.println("haciendo push de " + clase);
             ps.push(new RS(clase));
         }
 
         public void push(String clase, Object nombre){
-            System.out.println("haciendo push de " + nombre);
+            //System.out.println("haciendo push de " + nombre);
             ps.push(new RS(clase, nombre));
         }
 
         public void push(String clase, Object nombre, Object[] valor){
-            System.out.println("haciendo push de " + nombre);
+            //System.out.println("haciendo push de " + nombre);
             ps.push(new RS(clase, nombre, valor));
         }
 
+        public void push(String clase, Object nombre, Object tipo){
+            //System.out.println("haciendo push de " + nombre);
+            ps.push(new RS(clase, nombre, tipo));
+        }
+
         public void push(RS r){
-            System.out.println("haciendo push de " + r.nombre);
+            //System.out.println("haciendo push de " + r.nombre);
             ps.push(r);
         }
 
         public RS pop(){
-            System.out.println("haciendo pop de " + ps.peek().nombre + " " + ps.peek().clase);
+            //System.out.println("haciendo pop de " + ps.peek().nombre + " " + ps.peek().clase);
             return ps.pop();
         }
 
@@ -2057,7 +2069,7 @@ class CUP$parser$actions {
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		 
             RESULT = n;
-            pilaSemantica.push("numero", n); 
+            pilaSemantica.push("numero", n, "int"); 
         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor_numerico",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2070,7 +2082,10 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		 RESULT = n; 
+		 
+            RESULT = n;
+            pilaSemantica.push("float", n, "float"); 
+        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor_numerico",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2082,7 +2097,10 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		 RESULT = n; 
+		 
+            RESULT = n;
+            pilaSemantica.push("octal", n, "oct"); 
+        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor_numerico",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2094,7 +2112,10 @@ class CUP$parser$actions {
 		int nleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int nright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object n = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		 RESULT = n; 
+		 
+            RESULT = n;
+            pilaSemantica.push("hex", n, "hex"); 
+        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor_numerico",5, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2166,12 +2187,12 @@ class CUP$parser$actions {
         String op1 = pilaSemantica.pop().nombre.toString();
 
         if(operador.equals("mul") || operador.equals("div")){
-            labels.append(labelStack.peek(),"\nmov eax, " + op1 +
-                            "\nmov ebx, " + op2 + 
-                            "\n" + operador + " ebx" + 
-                            "\nmov rcx, eax"); // PONE EL RESULTADO EN RCX
+            labels.append(labelStack.peek(),"\nmov rax, " + op1 + "\t\t;multiplicacion o division" + 
+                            "\nmov rbx, " + op2 + 
+                            "\n" + operador + " rbx" + 
+                            "\nmov rcx, rax"); // PONE EL RESULTADO EN RCX
         } else {
-            labels.append(labelStack.peek(),"\nmov rax, " + op1 + 
+            labels.append(labelStack.peek(),"\nmov rax, " + op1 + "\t\t;suma o resta" + 
                             "\nmov rbx, " + op2 + 
                             "\n" + operador + " rax, rbx" + 
                             "\nmov rcx, rax"); // LO MUEVE A OTRO REGISTRO PARA QUE LO UTILICE ???
@@ -2312,9 +2333,9 @@ class CUP$parser$actions {
 		
         RS v = pilaSemantica.pop();
         pilaSemantica.push("do", v.nombre);
-        if (TablaSimbolos.get(v.nombre) == null && TablaSimbolos.get("_"+v.nombre) == null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+        if (TablaSimbolos.get(v.nombre) == null && TablaSimbolos.get("_"+v.nombre) == null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + v.nombre + "\"");
         try {
-             if(TablaSimbolos.get(v.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+             if(TablaSimbolos.get(v.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + v.nombre + "\"");
         } catch(Exception e) {}
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor",17, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -2334,6 +2355,9 @@ class CUP$parser$actions {
         } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != 0){
             System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Cantidad incorrecta de parámetros para \"" + id + "\"");
         }
+
+        pilaSemantica.push("do", "(resultado de funcion)");
+
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor",17, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2355,10 +2379,14 @@ class CUP$parser$actions {
 
         for(int i = 0; i<len; i++){
             RS rs = pilaSemantica.pop();
-            if (TablaSimbolos.get(rs.nombre) == null && TablaSimbolos.get("_"+rs.nombre) == null){
-                System.out.println("Error en línea " + (eright+1)+": Símbolo no definido \"" + rs.nombre + "\"");
+            if (rs.clase.equals("numero") || rs.clase.equals("float") || rs.clase.equals("oct") || rs.clase.equals("hex")){
+                arr.add(rs.tipo);
             } else {
-                arr.add(TablaSimbolos.get(rs.nombre).tipo);
+                if (TablaSimbolos.get(rs.nombre) == null && TablaSimbolos.get("_"+rs.nombre) == null){
+                    System.out.println("Error en línea " + (eright+1)+", columna " + (eleft+1) + ": Símbolo no definido \"" + rs.nombre + "\"");
+                } else {
+                    arr.add(TablaSimbolos.get(rs.nombre).tipo);
+                }
             }
         }
 
@@ -2369,6 +2397,9 @@ class CUP$parser$actions {
         } else {
             if (!Arrays.equals(arr.toArray(), TablaSimbolos.get(id).tipoParametros)) System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Tipos incorrectos de parámetros para \"" + id + "\"");
         }
+
+        pilaSemantica.push("do", "(resultado de funcion)");
+        
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("valor",17, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2582,6 +2613,8 @@ class CUP$parser$actions {
             } else {
                 if (tipo.toString().equals("int")){
                     TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo, 0));
+                } if (tipo.toString().equals("float")){
+                    TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo, 0.0));
                 } else {
                     TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo));
                     // Tal vez aqui se deberia usar la pila semantica
@@ -2778,10 +2811,11 @@ class CUP$parser$actions {
         String op1 = variable.nombre.toString();
         String op2 = "";
 
-        if (TablaSimbolos.get(variable.nombre) == null && TablaSimbolos.get("_"+variable.nombre) == null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + variable.nombre + "\""); 
+
+        if (TablaSimbolos.get(variable.nombre) == null && TablaSimbolos.get("_"+variable.nombre) == null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + op1 + "\""); 
         
         try {
-             if(TablaSimbolos.get(variable.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+             if(TablaSimbolos.get(variable.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + op1 + "\"");
         } catch(Exception e) {}
 
         if (valor.clase.equals("op")){
@@ -2790,7 +2824,7 @@ class CUP$parser$actions {
             op2 = valor.nombre.toString();
         }
         
-        labels.append(labelStack.peek(),"\nmov " + op1 + ", " + op2);
+        labels.append(labelStack.peek(),"\nmov " + op1 + ", " + op2 + "\t\t;asignacion");
 
         pilaSemantica.push(valor);
     

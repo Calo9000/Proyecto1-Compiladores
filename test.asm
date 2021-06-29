@@ -1,13 +1,15 @@
 section .data
-a dd 0
-x dd 0
-y dd 0
+b dd 
+c dd 
+x dd 
+y dd 
 global main 
 
 section .text
 main:
-mov rax, b
-mov rbx, z
+mov rax, z		;suma o resta
+mov rbx, 2
 add rax, rbx
 mov rcx, rax
-mov y, rcx
+mov y, rcx		;asignacion
+mov a, (resultado de funcion)		;asignacion
