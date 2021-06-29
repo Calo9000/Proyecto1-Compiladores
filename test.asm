@@ -1,15 +1,18 @@
 section .data
-b dd 
-c dd 
-x dd 
-y dd 
+a dd 0.0
+b dd 0.0
+g dd 0
+x dd 0
+y dd 0
 global main 
 
 section .text
 main:
-mov rax, z		;suma o resta
-mov rbx, 2
-add rax, rbx
-mov rcx, rax
-mov y, rcx		;asignacion
-mov a, (resultado de funcion)		;asignacion
+mov b, x		;asignacion
+cmp b, 10
+jl label1
+
+label1:
+cmp b, 10
+jl label1		;si no se cumple la condicion, vuelve a ejecutar
+ret

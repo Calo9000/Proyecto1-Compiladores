@@ -2607,6 +2607,8 @@ class CUP$parser$actions {
 
         Object tipo = pilaSemantica.pop().nombre;
 
+        System.out.println(tipo);
+
         for (int i = 0; i<arr.size(); i++) {
             if (TablaSimbolos.get(arr.get(i)) != null || TablaSimbolos.get("_" + arr.get(i)) != null){
                 System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + arr.get(i) + "\"");
@@ -2616,7 +2618,7 @@ class CUP$parser$actions {
                 } if (tipo.toString().equals("float")){
                     TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo, 0.0));
                 } else {
-                    TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo));
+                    TablaSimbolos.put(arr.get(i), new simbolo(arr.get(i), tipo, 0));
                     // Tal vez aqui se deberia usar la pila semantica
                 }
             }
@@ -2663,8 +2665,10 @@ class CUP$parser$actions {
         } else {
             if (tipo.nombre.equals("int")){
                 TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre,0));
+            } else if (tipo.nombre.equals("float")){
+                TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre,0.0));
             } else {
-                TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre));
+                TablaSimbolos.put(id.nombre, new simbolo(id.nombre, tipo.nombre, 0));
             }
         }
     
