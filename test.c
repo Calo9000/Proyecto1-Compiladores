@@ -1,9 +1,10 @@
 int x, y;
 int a;
- 
+
+int f(int a, int b){
+	y = b + z;
+}
+
 int main(){
-	y = 10;
-	while (x<y){
-		x++;
-	}
+	
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.ArrayList;
+import java.util.Set;
 import java.io.FileWriter;
 
 action code
@@ -48,6 +49,11 @@ parser code
             if (this.tipoParametros != null) s += "\t" + Arrays.toString(this.tipoParametros);
             return s;
         }
+        
+        public boolean esFuncion(){
+            return (this.cantidadParametros != null);
+        }
+
     }
 
     // Clase de Registro Semántico
@@ -223,7 +229,8 @@ parser code
                 System.out.println(entry.getKey().toString() + "\t:\t " + entry.getValue().toString()); // imprimir tabla de simbolos
                 simbolo s = entry.getValue();
                 if (s.cantidadParametros == null) { // es una variable
-                    data_segment +=  s.id.toString() + " dd " + s.valor.toString() + "\n";
+                    String valor = (s.valor == null) ? "" : s.valor.toString();
+                    data_segment +=  s.id.toString() + " dd " + valor + "\n";
                 }
             }
             System.out.println("\nPrograma analizado");
@@ -389,8 +396,10 @@ t_dato ::=
 
 valor_numerico ::=
     NUMERO:n
-        {: RESULT = n;
-            pilaSemantica.push("numero", n); :}
+        {: 
+            RESULT = n;
+            pilaSemantica.push("numero", n); 
+        :}
     | 
     NUMERO_FLOAT:n
         {: RESULT = n; :}
@@ -408,7 +417,7 @@ operador ::=
     MULTIPLICACION {: pilaSemantica.push("operador", "mul"); :} | 
     DIVISION {: pilaSemantica.push("operador", "div"); :} | 
     OP_LOGICO:op {: pilaSemantica.push("operador", op.toString()); :} | 
-    OP_RELACIONAL:op {: pilaSemantica.push("operador", op.toString()); :} | 
+    //OP_RELACIONAL:op {: pilaSemantica.push("operador", op.toString()); :} | 
     MODULO
 ;
 
@@ -466,12 +475,15 @@ valor ::= PARIZQ valor:v PARDER {: RESULT = v; :} | valor_numerico | LITERAL:l {
     {:
         RS v = pilaSemantica.pop();
         pilaSemantica.push("do", v.nombre);
-        if (TablaSimbolos.get(v.nombre) == null || TablaSimbolos.get(v.nombre).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+        if (TablaSimbolos.get(v.nombre) == null && TablaSimbolos.get("_"+v.nombre) == null) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+        try {
+             if(TablaSimbolos.get(v.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+        } catch(Exception e) {}
     :}
     | 
     IDENTIFICADOR:id PARIZQ PARDER
     {:
-        if(TablaSimbolos.get(id) == null){
+        if(TablaSimbolos.get(id) == null && TablaSimbolos.get("_"+id) == null){
             System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Símbolo no definido \"" + id + "\"");
         } else if (TablaSimbolos.get(id).cantidadParametros == null || TablaSimbolos.get(id).cantidadParametros != 0){
             System.out.println("Error en línea " + (idright+1)+", columna " + (idleft+1) + ": Cantidad incorrecta de parámetros para \"" + id + "\"");
@@ -485,7 +497,7 @@ valor ::= PARIZQ valor:v PARDER {: RESULT = v; :} | valor_numerico | LITERAL:l {
 
         for(int i = 0; i<len; i++){
             RS rs = pilaSemantica.pop();
-            if (TablaSimbolos.get(rs.nombre) == null){
+            if (TablaSimbolos.get(rs.nombre) == null && TablaSimbolos.get("_"+rs.nombre) == null){
                 System.out.println("Error en línea " + (eright+1)+": Símbolo no definido \"" + rs.nombre + "\"");
             } else {
                 arr.add(TablaSimbolos.get(rs.nombre).tipo);
@@ -568,7 +580,7 @@ declaracion ::=
         Object tipo = pilaSemantica.pop().nombre;
 
         for (int i = 0; i<arr.size(); i++) {
-            if (TablaSimbolos.get(arr.get(i)) != null){
+            if (TablaSimbolos.get(arr.get(i)) != null || TablaSimbolos.get("_" + arr.get(i)) != null){
                 System.out.println("Error en línea " + (dright+1) + ": Múltiple declaración de símbolo  \"" + arr.get(i) + "\"");
             } else {
                 if (tipo.toString().equals("int")){
@@ -660,8 +672,12 @@ asignacion ::=
         String op1 = variable.nombre.toString();
         String op2 = "";
 
-        if (TablaSimbolos.get(variable.nombre) == null || TablaSimbolos.get(variable.nombre).cantidadParametros != null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + variable.nombre + "\""); 
+        if (TablaSimbolos.get(variable.nombre) == null && TablaSimbolos.get("_"+variable.nombre) == null) System.out.println("Error en línea " + (varright+1) + ": Variable no definida  \"" + variable.nombre + "\""); 
         
+        try {
+             if(TablaSimbolos.get(variable.nombre).esFuncion()) System.out.println("Error en línea " + (varright+1) + " columna "+ (varleft+1) + ": Variable no definida  \"" + var + "\"");
+        } catch(Exception e) {}
+
         if (valor.clase.equals("op")){
             op2 = "rcx";
         } else {
@@ -708,7 +724,13 @@ resto_parametros ::=
 parametro ::= 
     t_dato:t variable
     {:
-        RS variable = pilaSemantica.pop();
+        String variable = pilaSemantica.pop().nombre.toString();
+        String tipo = pilaSemantica.peek().nombre.toString();
+        if (TablaSimbolos.get("_" + variable) != null){
+            System.out.println("Error en línea " + (tright+1)+", columna " + (tleft+1) + ": Variable repetida en parámetros");
+        } else {
+            TablaSimbolos.put("_" + variable, new simbolo(variable, tipo));
+        }
         //RESULT = t;
     :}
     | 
@@ -747,6 +769,20 @@ funcion ::=
         } else {
             TablaSimbolos.put(id, new simbolo(id, tipo, arr.size(), arr.toArray()));
         }
+
+        Set<Object> llavesTabla = TablaSimbolos.keySet();
+        ArrayList<Object> llaves = new ArrayList<>();
+        for (Object llave : llavesTabla){
+            if(llave.toString().startsWith("_")){
+                llaves.add(llave);
+            }
+        }
+        for (Object llave : llaves){
+            if(llave.toString().startsWith("_")){
+                TablaSimbolos.remove(llave);
+            }
+        }
+
     :}
     | 
     VOID:v IDENTIFICADOR:id PARIZQ parametros_opc:p PARDER LLAVEIZQ dentro_funcion LLAVEDER
@@ -790,7 +826,6 @@ sentencia ::=
     :}
     | sentencia_while
     {:
-        System.out.println(pilaSemantica.search("while"));
         while (pilaSemantica.peek().clase != "while") pilaSemantica.pop();
         pilaSemantica.pop();
     :}
@@ -864,7 +899,7 @@ sentencia_if ::= IF PARIZQ condicion PARDER sentencia
         labels.append(labelStack.peek(),"\nret");
         labelStack.pop();
     :}
-    | error_sentencia_if
+    //| error_sentencia_if
 ;
 
 // condicion recibe dos parametros y hace una operacion booleana o relacional
